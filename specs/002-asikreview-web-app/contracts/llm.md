@@ -22,3 +22,8 @@ export async function generateContent(req: GenerateContentRequest): Promise<Gene
   // To be implemented: API call or mock logic
 }
 ```
+
+## System Prompt Requirements
+The LLM mock (and future real implementation) MUST return an `htmlBannerCode` that closely matches the structure and aesthetic of the template file provided by the user:
+- **Reference Template**: `example/book_review_banner_with_img.html`
+- **Key Characteristics**: 16:9 aspect ratio, split left/right layout (content vs image), minimalist typography, `clamp()` fluid font sizing, inline styles for robustness.
