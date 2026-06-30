@@ -2,12 +2,6 @@
 
 import * as React from "react"
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Loader2, Sparkles } from "lucide-react"
-
 import { GeneratorFormData } from "@/lib/types/models"
 
 interface GeneratorFormProps {
@@ -22,6 +16,7 @@ export function GeneratorForm({ onSubmit, isLoading }: GeneratorFormProps) {
     notes: "",
     affiliateLink: "",
     imageUrl: "",
+    scheduledAt: "",
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,20 +33,11 @@ export function GeneratorForm({ onSubmit, isLoading }: GeneratorFormProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-md mx-auto p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
-      <div className="space-y-1">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">
-          AsikReview Generator
-        </h2>
-        <p className="text-sm text-gray-500">
-          Masukkan info buku untuk membuat review ala Medium.
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="title">Judul Buku</Label>
-          <Input
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <label htmlFor="title" className="block text-sm font-medium text-on-surface">Judul Buku <span className="text-error">*</span></label>
+          <input
             id="title"
             name="title"
             placeholder="Mulai Dengan Mengapa"
@@ -59,12 +45,13 @@ export function GeneratorForm({ onSubmit, isLoading }: GeneratorFormProps) {
             onChange={handleChange}
             required
             disabled={isLoading}
+            className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="author">Penulis</Label>
-          <Input
+        <div className="space-y-1">
+          <label htmlFor="author" className="block text-sm font-medium text-on-surface">Penulis <span className="text-error">*</span></label>
+          <input
             id="author"
             name="author"
             placeholder="Simon Sinek"
@@ -72,64 +59,85 @@ export function GeneratorForm({ onSubmit, isLoading }: GeneratorFormProps) {
             onChange={handleChange}
             required
             disabled={isLoading}
+            className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="notes">Catatan Tambahan (Opsional)</Label>
-          <Textarea
+        <div className="space-y-1">
+          <label htmlFor="notes" className="block text-sm font-medium text-on-surface">Catatan Tambahan (Opsional)</label>
+          <textarea
             id="notes"
             name="notes"
             placeholder="Fokus pada bagian kepemimpinan, gaya bahasa santai."
             value={formData.notes}
             onChange={handleChange}
-            rows={4}
             disabled={isLoading}
+            className="w-full min-h-[100px] p-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50 resize-y"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">Cover Image URL (Opsional)</Label>
-          <Input
-            id="imageUrl"
-            name="imageUrl"
-            placeholder="https://example.com/cover.png"
-            value={formData.imageUrl}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label htmlFor="imageUrl" className="block text-sm font-medium text-on-surface">Cover Image URL (Opsional)</label>
+            <input
+              id="imageUrl"
+              name="imageUrl"
+              placeholder="https://example.com/cover.png"
+              value={formData.imageUrl}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="affiliateLink" className="block text-sm font-medium text-on-surface">Affiliate Link (Opsional)</label>
+            <input
+              id="affiliateLink"
+              name="affiliateLink"
+              placeholder="https://tokopedia.link/..."
+              value={formData.affiliateLink}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="scheduledAt" className="block text-sm font-medium text-on-surface">Jadwal Tayang (Opsional)</label>
+          <input
+            id="scheduledAt"
+            name="scheduledAt"
+            type="datetime-local"
+            value={formData.scheduledAt || ""}
             onChange={handleChange}
             disabled={isLoading}
+            className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
           />
+          <p className="text-xs text-secondary mt-1">Jika dikosongkan, artikel tidak akan otomatis dipublish ke Medium.</p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="affiliateLink">Affiliate Link (Opsional)</Label>
-          <Input
-            id="affiliateLink"
-            name="affiliateLink"
-            placeholder="https://tokopedia.link/..."
-            value={formData.affiliateLink}
-            onChange={handleChange}
-            disabled={isLoading}
-          />
+        <div className="pt-4">
+          <button
+            type="submit"
+            disabled={isLoading || !formData.title || !formData.author}
+            className="w-full h-12 bg-primary hover:bg-surface-tint text-on-primary rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+          >
+            {isLoading ? (
+              <>
+                <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-lg">auto_awesome</span>
+                Mulai Setup Konten
+              </>
+            )}
+          </button>
         </div>
-
-        <Button
-          type="submit"
-          disabled={isLoading || !formData.title || !formData.author}
-          className="w-full relative overflow-hidden group h-11"
-        >
-          {isLoading ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Menulis Review...
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              Generate Review 🚀
-            </span>
-          )}
-        </Button>
-      </form>
-    </div>
+      </div>
+    </form>
   )
 }

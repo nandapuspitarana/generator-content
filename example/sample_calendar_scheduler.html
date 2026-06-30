@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Editorial CMS - Content Calendar</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#004c3a",
+                        "on-primary-fixed": "#002117",
+                        "on-secondary-fixed-variant": "#474746",
+                        "error": "#ba1a1a",
+                        "surface": "#f9f9f9",
+                        "surface-tint": "#0c6b54",
+                        "on-secondary-container": "#656464",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-bright": "#f9f9f9",
+                        "on-tertiary-fixed-variant": "#743329",
+                        "secondary-fixed": "#e4e2e1",
+                        "primary-fixed-dim": "#85d6b9",
+                        "surface-container-low": "#f3f3f3",
+                        "inverse-on-surface": "#f1f1f1",
+                        "outline": "#6f7974",
+                        "on-error": "#ffffff",
+                        "tertiary": "#6e2e25",
+                        "inverse-primary": "#85d6b9",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "primary-container": "#00664f",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container": "#eeeeee",
+                        "secondary": "#5f5e5e",
+                        "on-surface-variant": "#3f4944",
+                        "on-tertiary-container": "#ffc2b8",
+                        "tertiary-fixed-dim": "#ffb4a8",
+                        "on-primary-container": "#90e1c4",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#3b0804",
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9f9",
+                        "secondary-container": "#e4e2e1",
+                        "primary-fixed": "#a1f3d5",
+                        "surface-dim": "#dadada",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary-fixed-variant": "#00513e",
+                        "outline-variant": "#bec9c3",
+                        "tertiary-fixed": "#ffdad4",
+                        "tertiary-container": "#8b453a",
+                        "on-surface": "#1a1c1c",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2f3131"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "article-max": "720px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "40px",
+                        "gutter": "24px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "label-md": [
+                            "Inter"
+                        ],
+                        "body-lg": [
+                            "Inter"
+                        ],
+                        "body-md": [
+                            "Inter"
+                        ],
+                        "display-lg-mobile": [
+                            "Newsreader"
+                        ],
+                        "display-lg": [
+                            "Newsreader"
+                        ],
+                        "headline-md": [
+                            "Newsreader"
+                        ],
+                        "caption": [
+                            "Inter"
+                        ],
+                        "headline-sm": [
+                            "Newsreader"
+                        ]
+                    },
+                    "fontSize": {
+                        "label-md": [
+                            "14px",
+                            {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                            }
+                        ],
+                        "body-lg": [
+                            "20px",
+                            {
+                                "lineHeight": "32px",
+                                "fontWeight": "400"
+                            }
+                        ],
+                        "body-md": [
+                            "16px",
+                            {
+                                "lineHeight": "26px",
+                                "fontWeight": "400"
+                            }
+                        ],
+                        "display-lg-mobile": [
+                            "36px",
+                            {
+                                "lineHeight": "42px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                            }
+                        ],
+                        "display-lg": [
+                            "48px",
+                            {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                            }
+                        ],
+                        "headline-md": [
+                            "32px",
+                            {
+                                "lineHeight": "40px",
+                                "fontWeight": "500"
+                            }
+                        ],
+                        "caption": [
+                            "13px",
+                            {
+                                "lineHeight": "18px",
+                                "fontWeight": "400"
+                            }
+                        ],
+                        "headline-sm": [
+                            "24px",
+                            {
+                                "lineHeight": "32px",
+                                "fontWeight": "500"
+                            }
+                        ]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: #EDEDED;
+            border: 1px solid #EDEDED;
+        }
+
+        .calendar-cell {
+            background-color: #ffffff;
+            min-height: 120px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-cell.other-month {
+            background-color: #F9F9F9;
+            color: #6f7974;
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex">
+    <!-- SideNavBar -->
+    <nav
+        class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 border-r border-outline-variant p-6 bg-surface-container-low dark:bg-surface-container-lowest z-40">
+        <div class="mb-8">
+            <h1 class="font-display-lg text-headline-sm text-on-surface">Editorial CMS</h1>
+            <p class="font-label-md text-label-md text-secondary mt-1">Focused Writing</p>
+        </div>
+        <div class="flex-1 space-y-2">
+            <a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">home</span>
+                <span class="font-label-md text-label-md">Home</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">menu_book</span>
+                <span class="font-label-md text-label-md">Stories</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg duration-200 ease-in-out"
+                href="#">
+                <span class="material-symbols-outlined"
+                    style="font-variation-settings: 'FILL' 1;">collections_bookmark</span>
+                <span class="font-label-md text-label-md font-bold">Series</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">query_stats</span>
+                <span class="font-label-md text-label-md">Stats</span>
+            </a>
+        </div>
+        <div class="mt-auto space-y-4">
+            <button
+                class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:bg-surface-tint transition-colors">
+                Write New Story
+            </button>
+            <a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high dark:hover:bg-surface-container transition-all duration-200 ease-in-out rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="font-label-md text-label-md">Settings</span>
+            </a>
+        </div>
+    </nav>
+    <!-- Main Content Area -->
+    <main class="flex-1 ml-0 md:ml-64 flex flex-col min-h-screen">
+        <!-- TopAppBar (Mobile Only) -->
+        <header
+            class="md:hidden flex justify-between items-center w-full px-margin-mobile py-4 sticky top-0 z-50 bg-surface dark:bg-surface-dim border-b border-outline-variant">
+            <h1 class="font-display-lg-mobile text-headline-sm text-primary">The Editorial</h1>
+            <div class="flex gap-4">
+                <button class="text-primary"><span class="material-symbols-outlined">notifications</span></button>
+            </div>
+        </header>
+        <div
+            class="flex-1 p-margin-mobile md:p-margin-desktop flex flex-col lg:flex-row gap-gutter max-w-container-max mx-auto w-full">
+            <!-- Calendar Section -->
+            <section class="flex-1 flex flex-col">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="font-headline-md text-headline-md text-on-surface">October 2023</h2>
+                        <p class="font-body-md text-body-md text-secondary mt-2">Content Schedule</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button
+                            class="p-2 border border-outline-variant rounded hover:bg-surface-container transition-colors text-on-surface">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <button
+                            class="p-2 border border-outline-variant rounded hover:bg-surface-container transition-colors text-on-surface">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Calendar Grid -->
+                <div
+                    class="flex-1 flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+                    <!-- Days Header -->
+                    <div class="grid grid-cols-7 border-b border-outline-variant bg-surface-container-low">
+                        <div class="py-3 text-center font-label-md text-label-md text-secondary">Sun</div>
+                        <div class="py-3 text-center font-label-md text-label-md text-secondary">Mon</div>
+                        <div class="py-3 text-center font-label-md text-label-md text-secondary">Tue</div>
+                        <div class="py-3 text-center font-label-md text-label-md text-secondary">Wed</div>
+                        <div class="py-3 text-center font-label-md text-label-md text-secondary">Thu</div>
+                        <div class="py-3 text-center font-label-md text-label-md text-secondary">Fri</div>
+                        <div class="py-3 text-center font-label-md text-label-md text-secondary">Sat</div>
+                    </div>
+                    <!-- Grid Body (Simplified for example) -->
+                    <div class="calendar-grid flex-1">
+                        <!-- Row 1 -->
+                        <div class="calendar-cell other-month"><span class="font-body-md text-body-md mb-2">24</span>
+                        </div>
+                        <div class="calendar-cell other-month"><span class="font-body-md text-body-md mb-2">25</span>
+                        </div>
+                        <div class="calendar-cell other-month"><span class="font-body-md text-body-md mb-2">26</span>
+                        </div>
+                        <div class="calendar-cell other-month"><span class="font-body-md text-body-md mb-2">27</span>
+                        </div>
+                        <div class="calendar-cell other-month"><span class="font-body-md text-body-md mb-2">28</span>
+                        </div>
+                        <div class="calendar-cell other-month"><span class="font-body-md text-body-md mb-2">29</span>
+                        </div>
+                        <div class="calendar-cell other-month"><span class="font-body-md text-body-md mb-2">30</span>
+                        </div>
+                        <!-- Row 2 -->
+                        <div class="calendar-cell">
+                            <span class="font-body-md text-body-md mb-2">1</span>
+                        </div>
+                        <div class="calendar-cell">
+                            <span class="font-body-md text-body-md mb-2">2</span>
+                            <div
+                                class="bg-primary-container/20 border border-primary-container text-on-primary-fixed-variant px-2 py-1 rounded text-caption font-caption mb-1 truncate cursor-pointer hover:bg-primary-container/30">
+                                The Future of Minimalist Design
+                            </div>
+                        </div>
+                        <div class="calendar-cell">
+                            <span class="font-body-md text-body-md mb-2">3</span>
+                        </div>
+                        <div class="calendar-cell">
+                            <span class="font-body-md text-body-md mb-2">4</span>
+                        </div>
+                        <div class="calendar-cell">
+                            <span class="font-body-md text-body-md mb-2">5</span>
+                            <div
+                                class="bg-secondary-container text-on-secondary-container border border-outline-variant px-2 py-1 rounded text-caption font-caption mb-1 truncate cursor-pointer hover:bg-surface-variant">
+                                Interview: Jane Doe
+                            </div>
+                        </div>
+                        <div class="calendar-cell">
+                            <span class="font-body-md text-body-md mb-2">6</span>
+                        </div>
+                        <div class="calendar-cell">
+                            <span class="font-body-md text-body-md mb-2">7</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Sidebar: Unscheduled Drafts -->
+            <aside class="w-full lg:w-80 flex flex-col gap-6">
+                <div class="bg-surface-container-low rounded-xl p-6 h-full border border-outline-variant">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface">Drafts</h3>
+                        <span
+                            class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full text-caption font-caption">3</span>
+                    </div>
+                    <p class="font-caption text-caption text-secondary mb-4">Drag to calendar to schedule.</p>
+                    <div class="space-y-4">
+                        <!-- Draft Card -->
+                        <div
+                            class="bg-surface-container-lowest p-4 border border-outline-variant rounded-lg cursor-move hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-shadow">
+                            <div class="flex gap-2 mb-2">
+                                <span
+                                    class="bg-[#F0F0F0] text-on-surface px-2 py-0.5 rounded text-[11px] font-medium tracking-wide uppercase">Essay</span>
+                            </div>
+                            <h4 class="font-label-md text-label-md text-on-surface mb-2 line-clamp-2">Why Typography
+                                Matters More Than Ever</h4>
+                            <div class="flex items-center gap-2 text-secondary">
+                                <span class="material-symbols-outlined text-[16px]">person</span>
+                                <span class="font-caption text-caption">Alex Editor</span>
+                            </div>
+                        </div>
+                        <!-- Draft Card -->
+                        <div
+                            class="bg-surface-container-lowest p-4 border border-outline-variant rounded-lg cursor-move hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-shadow">
+                            <div class="flex gap-2 mb-2">
+                                <span
+                                    class="bg-[#F0F0F0] text-on-surface px-2 py-0.5 rounded text-[11px] font-medium tracking-wide uppercase">Review</span>
+                            </div>
+                            <h4 class="font-label-md text-label-md text-on-surface mb-2 line-clamp-2">The New Standard
+                                in Digital Readers</h4>
+                            <div class="flex items-center gap-2 text-secondary">
+                                <span class="material-symbols-outlined text-[16px]">person</span>
+                                <span class="font-caption text-caption">Sam Writer</span>
+                            </div>
+                        </div>
+                        <!-- Draft Card -->
+                        <div
+                            class="bg-surface-container-lowest p-4 border border-outline-variant rounded-lg cursor-move hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-shadow">
+                            <div class="flex gap-2 mb-2">
+                                <span
+                                    class="bg-[#F0F0F0] text-on-surface px-2 py-0.5 rounded text-[11px] font-medium tracking-wide uppercase">News</span>
+                            </div>
+                            <h4 class="font-label-md text-label-md text-on-surface mb-2 line-clamp-2">Industry Shift:
+                                Print to Digital</h4>
+                            <div class="flex items-center gap-2 text-secondary">
+                                <span class="material-symbols-outlined text-[16px]">person</span>
+                                <span class="font-caption text-caption">News Desk</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+</body>
+
+</html>

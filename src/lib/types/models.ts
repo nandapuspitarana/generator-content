@@ -4,6 +4,7 @@ export interface GeneratorFormData {
   notes: string
   affiliateLink?: string
   imageUrl?: string
+  scheduledAt?: string
 }
 
 export interface GeneratorFormState extends GeneratorFormData {

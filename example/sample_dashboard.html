@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Editorial Dashboard Overview</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#004c3a",
+                        "on-primary-fixed": "#002117",
+                        "on-secondary-fixed-variant": "#474746",
+                        "error": "#ba1a1a",
+                        "surface": "#f9f9f9",
+                        "surface-tint": "#0c6b54",
+                        "on-secondary-container": "#656464",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-bright": "#f9f9f9",
+                        "on-tertiary-fixed-variant": "#743329",
+                        "secondary-fixed": "#e4e2e1",
+                        "primary-fixed-dim": "#85d6b9",
+                        "surface-container-low": "#f3f3f3",
+                        "inverse-on-surface": "#f1f1f1",
+                        "outline": "#6f7974",
+                        "on-error": "#ffffff",
+                        "tertiary": "#6e2e25",
+                        "inverse-primary": "#85d6b9",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "primary-container": "#00664f",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container": "#eeeeee",
+                        "secondary": "#5f5e5e",
+                        "on-surface-variant": "#3f4944",
+                        "on-tertiary-container": "#ffc2b8",
+                        "tertiary-fixed-dim": "#ffb4a8",
+                        "on-primary-container": "#90e1c4",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#3b0804",
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9f9",
+                        "secondary-container": "#e4e2e1",
+                        "primary-fixed": "#a1f3d5",
+                        "surface-dim": "#dadada",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary-fixed-variant": "#00513e",
+                        "outline-variant": "#bec9c3",
+                        "tertiary-fixed": "#ffdad4",
+                        "tertiary-container": "#8b453a",
+                        "on-surface": "#1a1c1c",
+                        "surface-variant": "#e2e2e2",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2f3131"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "article-max": "720px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "40px",
+                        "gutter": "24px",
+                        "unit": "8px"
+                    },
+                    "fontFamily": {
+                        "label-md": [
+                            "Inter"
+                        ],
+                        "body-lg": [
+                            "Inter"
+                        ],
+                        "body-md": [
+                            "Inter"
+                        ],
+                        "display-lg-mobile": [
+                            "Newsreader"
+                        ],
+                        "display-lg": [
+                            "Newsreader"
+                        ],
+                        "headline-md": [
+                            "Newsreader"
+                        ],
+                        "caption": [
+                            "Inter"
+                        ],
+                        "headline-sm": [
+                            "Newsreader"
+                        ]
+                    },
+                    "fontSize": {
+                        "label-md": [
+                            "14px",
+                            {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                            }
+                        ],
+                        "body-lg": [
+                            "20px",
+                            {
+                                "lineHeight": "32px",
+                                "fontWeight": "400"
+                            }
+                        ],
+                        "body-md": [
+                            "16px",
+                            {
+                                "lineHeight": "26px",
+                                "fontWeight": "400"
+                            }
+                        ],
+                        "display-lg-mobile": [
+                            "36px",
+                            {
+                                "lineHeight": "42px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                            }
+                        ],
+                        "display-lg": [
+                            "48px",
+                            {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                            }
+                        ],
+                        "headline-md": [
+                            "32px",
+                            {
+                                "lineHeight": "40px",
+                                "fontWeight": "500"
+                            }
+                        ],
+                        "caption": [
+                            "13px",
+                            {
+                                "lineHeight": "18px",
+                                "fontWeight": "400"
+                            }
+                        ],
+                        "headline-sm": [
+                            "24px",
+                            {
+                                "lineHeight": "32px",
+                                "fontWeight": "500"
+                            }
+                        ]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex">
+    <!-- SideNavBar (Hidden on Mobile, Visible on md+) -->
+    <nav
+        class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 border-r border-outline-variant p-6 bg-surface-container-low dark:bg-surface-container-lowest z-40">
+        <div class="mb-12 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden shrink-0">
+                <img alt="Editorial Workspace" class="w-full h-full object-cover"
+                    data-alt="A sophisticated, minimalist abstract logo design suitable for a premium editorial platform. Clean lines, dark green primary color, white background, conveying trust and quality."
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgwl7DZq6oTZcImcWCDRM8pPEveIoRX7x8E4JixVkelVssNUXtM2eescw68hlD58bSvyGX_QG6K-w89kFYcwYKnqddDUiKFoXyG2i4xBFjQVM9eBe3_thR6PRHfvhPxzuq9vUs2LG4oZ6gVLxYHIiPZdOM7RpZjH1CbHzTgebBzL2Ty-69hEiw6zm7W8TlOlceXEVUd_nuh7xla3o-ch83P5Ah3ZvRQjUBDo3bMIauMi0bYlpc2lWu6boTpIo59xn1P8IcmmHs0pk" />
+            </div>
+            <div>
+                <h1 class="font-headline-sm text-headline-sm text-on-surface m-0">Editorial CMS</h1>
+                <p class="font-caption text-caption text-secondary dark:text-secondary-fixed-dim m-0">Focused Writing
+                </p>
+            </div>
+        </div>
+        <ul class="flex flex-col gap-2 flex-grow">
+            <li>
+                <a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-high transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined fill">home</span>
+                    Home
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim rounded-lg duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-high transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">menu_book</span>
+                    Stories
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim rounded-lg duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-high transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">collections_bookmark</span>
+                    Series
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim rounded-lg duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-high transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">query_stats</span>
+                    Stats
+                </a>
+            </li>
+        </ul>
+        <div class="mt-auto pt-6 border-t border-outline-variant">
+            <a class="flex items-center gap-3 px-4 py-3 text-secondary dark:text-secondary-fixed-dim rounded-lg duration-200 ease-in-out font-label-md text-label-md hover:bg-surface-container-high transition-all mb-4"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+            <button
+                class="w-full py-3 px-4 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">edit_document</span>
+                Write New Story
+            </button>
+        </div>
+    </nav>
+    <!-- Main Content Area -->
+    <main class="flex-grow md:ml-64 flex flex-col min-h-screen">
+        <!-- TopNavBar (Mobile: Full nav, Desktop: Actions only) -->
+        <header
+            class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 sticky top-0 z-50 bg-surface dark:bg-surface-dim">
+            <!-- Mobile Brand (Hidden on Desktop) -->
+            <div class="md:hidden flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden shrink-0">
+                    <img alt="Editor Profile" class="w-full h-full object-cover"
+                        data-alt="A sophisticated, minimalist abstract logo design suitable for a premium editorial platform. Clean lines, dark green primary color, white background, conveying trust and quality."
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7-T1u8Xk32XmlG7pRcSnSEqeEebYLxTQD0FhUP97mmc2KCXyGJ7cYcp26qdZr8kmg0hMoWgCcaMAXnW5-BWkFXQ0Ky5Goz8rtcpT1Q-U7tnwZs9K5O0ygAkhtZRe85tIjm775L7-K6bVd_oEdR81m_yPZaXD-LwXLILDLUuUKW4YiuQ3z9_er8vzhs_HHB9BB0RGXYKQ_jjlvDcKpE6akXt3jNY9WH24H6N3pPfFJLkjU1-Gt3vcHOibQPpl41eCxxEbNh-29WrU" />
+                </div>
+                <span class="font-display-lg-mobile text-headline-sm text-primary dark:text-primary-fixed-dim m-0">The
+                    Editorial</span>
+            </div>
+            <!-- Desktop Search/Title Area (Hidden on Mobile) -->
+            <div class="hidden md:flex items-center flex-grow">
+                <h2 class="font-headline-md text-headline-md text-on-surface m-0">Overview</h2>
+            </div>
+            <!-- Trailing Actions -->
+            <div class="flex items-center gap-4 shrink-0">
+                <button
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-secondary hover:text-on-surface transition-colors cursor-pointer active:scale-95 duration-200 bg-surface-container-low hover:bg-surface-container">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <button
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-secondary hover:text-on-surface transition-colors cursor-pointer active:scale-95 duration-200 bg-surface-container-low hover:bg-surface-container">
+                    <span class="material-symbols-outlined">publish</span>
+                </button>
+                <div
+                    class="w-10 h-10 rounded-full bg-surface-variant overflow-hidden shrink-0 ml-2 border border-outline-variant cursor-pointer active:scale-95 duration-200">
+                    <img alt="Editor Profile" class="w-full h-full object-cover"
+                        data-alt="A professional headshot of a writer or editor. Clean, warm lighting, approachable yet authoritative expression, set against a neutral light grey background."
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAL66TleGkAOmI62_yOGl1QvovzuppORcYBMmOqFjQbGLznbE74kwey-XRAHB1MLD06tEXBkj6QfC-FOyeVdMgylhrHNFzrW7RLCn0wE0t49-sGemIRlrIklVbUul9f0KEcO0HgK3GxHluns3qWiUX7MjbtLjs4f5rvtdgWczuUd3zJ-DFBg_Rx7Lxtzq_A8udsRzI9l972BNMplUmLKU-g_GnSXTaoFvzmAgU4zakdyk45mKILXtff4c5rJu8i7wMUVeSwY9lotfE" />
+                </div>
+            </div>
+        </header>
+        <!-- Dashboard Canvas -->
+        <div class="flex-grow p-margin-mobile md:p-margin-desktop max-w-[1400px] mx-auto w-full">
+            <div class="md:hidden mb-8">
+                <h2 class="font-headline-md text-headline-md text-on-surface m-0">Overview</h2>
+            </div>
+            <!-- Bento Grid Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+                <!-- Metrics (Spans 8 cols on lg) -->
+                <section class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-unit h-fit">
+                    <!-- Metric Card 1 -->
+                    <div
+                        class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex flex-col justify-between min-h-[140px]">
+                        <div class="flex items-center gap-2 text-secondary mb-2">
+                            <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            <span class="font-label-md text-label-md">Total Views</span>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="font-display-lg text-display-lg text-on-surface">124k</span>
+                            <span class="font-caption text-caption text-primary flex items-center gap-1 pb-2">
+                                <span class="material-symbols-outlined text-[16px]">trending_up</span> 12%
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Metric Card 2 -->
+                    <div
+                        class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex flex-col justify-between min-h-[140px]">
+                        <div class="flex items-center gap-2 text-secondary mb-2">
+                            <span class="material-symbols-outlined text-[20px]">group</span>
+                            <span class="font-label-md text-label-md">Subscribers</span>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="font-display-lg text-display-lg text-on-surface">8.2k</span>
+                            <span class="font-caption text-caption text-primary flex items-center gap-1 pb-2">
+                                <span class="material-symbols-outlined text-[16px]">trending_up</span> 5%
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Metric Card 3 -->
+                    <div
+                        class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex flex-col justify-between min-h-[140px]">
+                        <div class="flex items-center gap-2 text-secondary mb-2">
+                            <span class="material-symbols-outlined text-[20px]">timer</span>
+                            <span class="font-label-md text-label-md">Avg. Read Time</span>
+                        </div>
+                        <div class="flex items-end justify-between">
+                            <span class="font-display-lg text-display-lg text-on-surface">4m</span>
+                            <span class="font-caption text-caption text-secondary flex items-center gap-1 pb-2">
+                                <span class="material-symbols-outlined text-[16px]">trending_flat</span> 0%
+                            </span>
+                        </div>
+                    </div>
+                </section>
+                <!-- Upcoming Schedule (Spans 4 cols on lg) -->
+                <section class="lg:col-span-4 bg-surface-container-low p-6 rounded-xl row-span-2 flex flex-col">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface m-0">Schedule</h3>
+                        <button class="text-secondary hover:text-on-surface transition-colors">
+                            <span class="material-symbols-outlined">more_horiz</span>
+                        </button>
+                    </div>
+                    <div class="flex-grow flex flex-col gap-6">
+                        <!-- Schedule Item -->
+                        <div class="flex gap-4 group cursor-pointer">
+                            <div class="flex flex-col items-center min-w-[40px]">
+                                <span class="font-label-md text-label-md text-secondary">Oct</span>
+                                <span
+                                    class="font-headline-sm text-headline-sm text-on-surface leading-none mt-1">24</span>
+                            </div>
+                            <div class="flex-grow border-l-2 border-primary pl-4 py-1">
+                                <h4
+                                    class="font-label-md text-label-md text-on-surface mb-1 group-hover:text-primary transition-colors">
+                                    The Future of Minimalism</h4>
+                                <p class="font-caption text-caption text-secondary">Scheduled for 09:00 AM</p>
+                            </div>
+                        </div>
+                        <!-- Schedule Item -->
+                        <div class="flex gap-4 group cursor-pointer">
+                            <div class="flex flex-col items-center min-w-[40px]">
+                                <span class="font-label-md text-label-md text-secondary">Oct</span>
+                                <span
+                                    class="font-headline-sm text-headline-sm text-on-surface leading-none mt-1">26</span>
+                            </div>
+                            <div class="flex-grow border-l-2 border-outline-variant pl-4 py-1">
+                                <h4
+                                    class="font-label-md text-label-md text-on-surface mb-1 group-hover:text-primary transition-colors">
+                                    Typography in Digital Spaces</h4>
+                                <p class="font-caption text-caption text-secondary">Drafting Phase</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        class="mt-6 w-full py-2 px-4 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors">
+                        View Full Calendar
+                    </button>
+                </section>
+                <!-- Recent Drafts (Spans 8 cols on lg) -->
+                <section class="lg:col-span-8 mt-8 lg:mt-0">
+                    <div class="flex items-center justify-between mb-6 border-b border-outline-variant pb-4">
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface m-0">Recent Drafts</h3>
+                        <a class="font-label-md text-label-md text-primary hover:underline" href="#">View All</a>
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        <!-- Draft Card 1 -->
+                        <div
+                            class="flex gap-4 p-4 rounded-xl hover:bg-surface-container-lowest transition-colors group cursor-pointer border border-transparent hover:border-outline-variant">
+                            <div
+                                class="w-24 h-24 rounded-lg bg-surface-variant overflow-hidden shrink-0 hidden sm:block">
+                                <img alt="Draft Thumbnail"
+                                    class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                                    data-alt="A softly lit, minimalist still life of a cup of black coffee next to an open notebook on a clean white desk, shot from above, evoking a calm morning writing session."
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuABeXsTlRllYAv0V_Wt0foITlzBT1Pm51SVZz_ADVLzxuAal01tJ4F5TF5hVmpkzhEbHFft7cz4CUAwaG0oJ-346Kz7q7whoapveIa0t151fh8xINs3cxBR7yEggJ_M4XXSa1WQlIaREI6WhsJTg8f7Tm3DgatFqa4EBwmBcE_8GyvhulnI6DVvX1GmBlhLOVf0ZT_2LqgDjXrNcDo4DQIQNoU2yjfqRrjZy2qFEPlhZEhX0bmG4cZO50XDEb5ZreznU6Q5vpVkg_Y" />
+                            </div>
+                            <div class="flex flex-col justify-center flex-grow">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span
+                                        class="px-2 py-1 bg-surface-container text-on-surface font-caption text-caption rounded-DEFAULT">Draft</span>
+                                    <span class="font-caption text-caption text-secondary">Last edited 2h ago</span>
+                                </div>
+                                <h4
+                                    class="font-headline-sm text-[20px] leading-[28px] text-on-surface mb-1 group-hover:text-primary transition-colors">
+                                    A Return to Slow Reading</h4>
+                                <p class="font-body-md text-[14px] leading-[22px] text-secondary line-clamp-1">In an age
+                                    of endless scrolling, the deliberate act of slow reading offers a necessary
+                                    sanctuary...</p>
+                            </div>
+                        </div>
+                        <!-- Draft Card 2 -->
+                        <div
+                            class="flex gap-4 p-4 rounded-xl hover:bg-surface-container-lowest transition-colors group cursor-pointer border border-transparent hover:border-outline-variant">
+                            <div
+                                class="w-24 h-24 rounded-lg bg-surface-variant overflow-hidden shrink-0 hidden sm:block">
+                                <img alt="Draft Thumbnail"
+                                    class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300"
+                                    data-alt="An abstract, monochromatic architectural photograph focusing on light and shadow across a concrete wall, emphasizing structure and simplicity."
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBM0MXbyCCafVby9niVCi6gMWP6NzgbqxjWXSrTANTQcFsafwx6X6T5tbXSKaSoHeBsHmQbDOT8oLsaFgR2KXkMPMIeviG-_xYupjaIiSvdjFz0mo7GyX1WR_yZAZxZNdOk_uwFDNM-vm_SPGuF1JJp4Zkndf9FvytRA43Tkqs5iohZ1G7J13G-WZcGRkk5ArI9Ghx1sVn_1mhp53YYlfPzP3W-1WsHpCSsX95Ur6PxS-4At5XgC1tLKQU8e5kXHwFn4FaU8fn8UKA" />
+                            </div>
+                            <div class="flex flex-col justify-center flex-grow">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span
+                                        class="px-2 py-1 bg-surface-container text-on-surface font-caption text-caption rounded-DEFAULT">Review</span>
+                                    <span class="font-caption text-caption text-secondary">Last edited yesterday</span>
+                                </div>
+                                <h4
+                                    class="font-headline-sm text-[20px] leading-[28px] text-on-surface mb-1 group-hover:text-primary transition-colors">
+                                    The Architecture of Silence</h4>
+                                <p class="font-body-md text-[14px] leading-[22px] text-secondary line-clamp-1">Exploring
+                                    the role of negative space not just in design, but in our daily routines and living
+                                    spaces...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -1,0 +1,75 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Article {
+  id              String         @id @default(uuid())
+  title           String
+  author          String
+  notes           String?
+  status          String         @default("IDEATION") // IDEATION, DRAFTING, DESIGNING, READY, PUBLISHED
+  markdownContent String?
+  affiliateLink   String?
+  contentType     String         @default("ARTICLE")
+  imageUrl        String?
+  mediumUrl       String?
+  scheduledAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  publishedAt     DateTime?
+  monetizationValue Float?       @default(0)
+  assets          ArticleAsset[]
+  metrics         PostMetric[]
+}
+
+model ArticleAsset {
+  id        String   @id @default(uuid())
+  articleId String
+  platform  String   // MEDIUM, INSTAGRAM, LINKEDIN
+  assetType String   // HTML_BANNER
+  content   String
+  createdAt DateTime @default(now())
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model SocialTrend {
+  id          String   @id @default(uuid())
+  platform    String   // FACEBOOK, LINKEDIN
+  keyword     String
+  content     String
+  author      String?
+  sourceUrl   String?
+  engagement  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model PostMetric {
+  id          String   @id @default(uuid())
+  articleId   String
+  views       Int      @default(0)
+  clicks      Int      @default(0)
+  recordedAt  DateTime @default(now())
+  article     Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
+
+model Banner {
+  id              String   @id @default(uuid())
+  name            String
+  format          String   // MEDIUM | INSTAGRAM
+  template        String   @default("classic") // classic | dark | minimal | quote
+  title           String   @default("")
+  author          String   @default("")
+  genre           String   @default("")
+  badgeText       String   @default("")
+  tags            String   @default("") // comma-separated
+  imageUrl        String   @default("")
+  elements        String   @default("[]") // JSON string of canvas elements
+  backgroundColor String   @default("#ffffff")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

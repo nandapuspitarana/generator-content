@@ -1,9 +1,9 @@
-import { GenerateContentRequest, GenerateContentResponse } from "@/lib/types/models"
+import { GenerateContentRequest, ParsedResult } from "@/lib/types/models"
 
 /**
  * Real LLM Service using OpenAI API
  */
-export async function generateContent(req: GenerateContentRequest): Promise<GenerateContentResponse> {
+export async function generateContent(req: GenerateContentRequest): Promise<ParsedResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY is not set in environment variables.");
@@ -140,6 +140,103 @@ Pastikan output berupa JSON object dengan properti "htmlBannerCode" (WAJIB pakai
     };
   } catch (e) {
     console.error("Failed to parse JSON from OpenAI:", e);
+    throw new Error("Format respons dari AI tidak valid.");
+  }
+}
+
+export interface ImportBannerRequest {
+  type: "image" | "html";
+  content: string; 
+  format: "MEDIUM" | "INSTAGRAM";
+}
+
+export async function importBannerWithAI(req: ImportBannerRequest) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set.");
+
+  const W = req.format === "MEDIUM" ? 1200 : 1080;
+  const H = req.format === "MEDIUM" ? 675 : 1080;
+
+  const systemPrompt = `You are an expert UI/UX developer. Your task is to analyze the provided ${req.type === 'image' ? 'design mockup image' : 'HTML code'} and convert its layout into a specific JSON array for a custom Canvas Engine.
+The canvas has dimensions: Width ${W}px, Height ${H}px.
+
+Return ONLY a valid JSON array of objects. Each object MUST have these exact properties:
+- "id": a unique string (e.g. "text-1", "img-1", "shape-1")
+- "type": must be "text", "image", or "shape" (do not generate "group")
+- "x": number (X coordinate in pixels)
+- "y": number (Y coordinate in pixels)
+- "w": number (Width in pixels)
+- "h": number (Height in pixels)
+- "zIndex": number (1 for background shapes, 2 for images, 3 for text)
+
+If type is "text":
+- "text": string (the text content)
+- "fontSize": number
+- "color": hex string (e.g. "#FFFFFF")
+- "fontWeight": "normal" | "500" | "bold" | "800" | "900"
+- "textAlign": "left" | "center" | "right"
+
+If type is "image":
+- "src": string (use a placeholder if original not available, like "https://placehold.co/800x800")
+- "objectFit": "cover" | "contain"
+- "borderRadius": number (optional, e.g. 0 or 12)
+
+If type is "shape":
+- "bgColor": hex string (e.g. "#1C1C1C")
+- "borderRadius": number (optional)
+
+Do NOT return anything else, no markdown formatting outside the JSON array. Output must be perfectly valid JSON array starting with [ and ending with ]. Make sure the layout approximately matches the input.`;
+
+  let messages: any[] = [
+    { role: "system", content: systemPrompt }
+  ];
+
+  if (req.type === "image") {
+    messages.push({
+      role: "user",
+      content: [
+        { type: "text", text: "Convert this design to the requested JSON layout." },
+        { type: "image_url", image_url: { url: req.content } }
+      ]
+    });
+  } else {
+    messages.push({
+      role: "user",
+      content: `Convert this HTML to the requested JSON layout:\n\n${req.content}`
+    });
+  }
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o", 
+      messages: messages,
+      temperature: 0.2, 
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.error("OpenAI API Error:", err);
+    throw new Error("Gagal memproses import.");
+  }
+
+  const data = await response.json();
+  let contentText = data.choices[0].message.content.trim();
+  
+  if (contentText.startsWith("\`\`\`json")) {
+    contentText = contentText.replace(/\`\`\`json/g, "").replace(/\`\`\`/g, "").trim();
+  }
+
+  try {
+    const parsed = JSON.parse(contentText);
+    return parsed;
+  } catch (e) {
+    console.error("Failed to parse JSON array from OpenAI:", e);
     throw new Error("Format respons dari AI tidak valid.");
   }
 }
