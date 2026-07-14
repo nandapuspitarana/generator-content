@@ -8,20 +8,23 @@ export interface PodcastFormData {
   author: string
   notes?: string
   length: "SHORT" | "MEDIUM" | "LONG"
+  knowledgeTagSlug?: string
 }
 
 export interface PodcastFormProps {
   onSubmit: (data: PodcastFormData) => void
   isLoading?: boolean
   defaultValues?: Partial<PodcastFormData>
+  availableTags?: any[]
 }
 
-export function PodcastForm({ onSubmit, isLoading, defaultValues }: PodcastFormProps) {
+export function PodcastForm({ onSubmit, isLoading, defaultValues, availableTags }: PodcastFormProps) {
   const [formData, setFormData] = useState<PodcastFormData>({
     title: defaultValues?.title || "",
     author: defaultValues?.author || "",
     notes: defaultValues?.notes || "",
-    length: defaultValues?.length || "MEDIUM"
+    length: defaultValues?.length || "MEDIUM",
+    knowledgeTagSlug: defaultValues?.knowledgeTagSlug || ""
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -80,6 +83,26 @@ export function PodcastForm({ onSubmit, isLoading, defaultValues }: PodcastFormP
             <option value="LONG">Panjang (1500 - 2000 kata / ~15-20 menit)</option>
           </select>
         </div>
+
+        {availableTags && availableTags.length > 0 && (
+          <div className="space-y-1">
+            <label htmlFor="knowledgeTagSlug" className="block text-sm font-medium text-on-surface">Knowledge Base Reference (Opsional)</label>
+            <select
+              id="knowledgeTagSlug"
+              name="knowledgeTagSlug"
+              value={formData.knowledgeTagSlug}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
+            >
+              <option value="">Tidak pakai referensi materi</option>
+              {availableTags.map((t: any) => (
+                <option key={t.slug} value={t.slug}>{t.title} ({t.category} - {t.type})</option>
+              ))}
+            </select>
+            <p className="text-[11px] text-secondary mt-1">Pilih materi dari Knowledge Base untuk menggunakan fitur RAG (Retrieval-Augmented Generation) sebagai dasar script podcast ini.</p>
+          </div>
+        )}
 
         <div className="space-y-1">
           <label htmlFor="notes" className="block text-sm font-medium text-on-surface">Catatan Tambahan / Arahan (Opsional)</label>

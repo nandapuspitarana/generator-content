@@ -45,7 +45,7 @@ export default async function PodcastGeneratorPage({ searchParams }: { searchPar
       </div>
 
       <div className="bg-surface-container-lowest p-6 md:p-8 rounded-xl border border-outline-variant shadow-sm">
-        <PodcastFormWrapper articleId={article.id} defaultTitle={`[Podcast] ${article.title || 'Untitled'}`} defaultAuthor={article.author || ''} />
+        <PodcastFormWrapper articleId={article.id} defaultTitle={`[Podcast] ${article.title || 'Untitled'}`} defaultAuthor={article.author || ''} defaultKnowledgeTagSlug={article.knowledgeTagSlug || ''} />
       </div>
     </div>
   )

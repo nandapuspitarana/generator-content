@@ -1,4 +1,4 @@
-import { GenerateContentRequest, ParsedResult } from "@/lib/types/models"
+import { GenerateContentRequest, ParsedResult, KnowledgeTag, KnowledgeChapter, WritingStyle } from "@/lib/types/models"
 
 /**
  * Real LLM Service using OpenAI API
@@ -239,4 +239,252 @@ Do NOT return anything else, no markdown formatting outside the JSON array. Outp
     console.error("Failed to parse JSON array from OpenAI:", e);
     throw new Error("Format respons dari AI tidak valid.");
   }
+}
+
+function getStyleInstruction(style: WritingStyle): string {
+  switch (style) {
+    case 'santai-storytelling':
+      return '"Lo tahu nggak sih..." — personal, santai, seperti ngobrol dengan teman, menggunakan bahasa gaul yang ringan tapi tetap sopan.';
+    case 'semi-formal-edukatif':
+      return '"Dalam buku ini, kita akan menemukan..." — informatif, terstruktur, rapi, dan mudah dipahami, cocok untuk artikel edukasi.';
+    case 'narasi-investigatif':
+      return '"Ada satu fakta yang bikin saya bergidik..." — dramatis, misterius, bikin penasaran, dan menggugah rasa ingin tahu yang kuat.';
+    default:
+      return 'Gunakan gaya penulisan yang menarik dan natural.';
+  }
+}
+
+export async function generateKnowledgeSummary(tag: KnowledgeTag, chapters: KnowledgeChapter[]): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set.");
+
+  const chaptersContext = chapters.map(c => `=== ${c.chapterNumber}. ${c.chapterTitle} ===\n${c.originalContent}`).join("\n\n");
+
+  // Determine framing based on type
+  const isBuku = tag.type === 'buku';
+  const topicLabel = isBuku ? `buku "${tag.title}"` : `topik "${tag.title}"`;
+  const sourceLabel = isBuku ? 'ringkasan buku' : 'ringkasan materi pembelajaran';
+
+  const systemPrompt = `Kamu adalah seorang asisten edukasi dan penulis konten profesional.
+Tugasmu adalah membuat ${sourceLabel} yang komprehensif dan edukatif berdasarkan catatan materi di bawah ini.
+
+PEDOMAN PENTING:
+- GUNAKAN SELURUH ISI dari teks materi yang diberikan sebagai sumber utama — jangan mengabaikan detail penting.
+- Fokus pada SUBSTANSI materi: jelaskan konsep-konsep kunci, algoritma, ide, atau argumen utama.
+- Sertakan "Why It Matters": mengapa materi ini relevan dan penting.
+- JANGAN parafrase dangkal — bedah isi materinya.
+Gunakan gaya penulisan: ${getStyleInstruction(tag.writingStyle)}
+Output hanya berupa teks Markdown yang rapi (gunakan heading dan bullet points secara proporsional), tanpa blok kode json atau markdown.`;
+
+  const userPrompt = `Judul: ${tag.title}
+Kategori: ${tag.category} | Tipe: ${tag.type}
+
+Catatan materi per bab/bagian:
+${chaptersContext}
+
+Buatkan ringkasan yang merangkum dan menjelaskan isi ${topicLabel} secara menyeluruh.`;
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) throw new Error("Failed to generate knowledge summary.");
+  const data = await response.json();
+  return data.choices[0].message.content.trim();
+}
+
+export async function generateChapterStory(tag: KnowledgeTag, chapter: KnowledgeChapter, style: WritingStyle): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set.");
+
+  const isBuku = tag.type === 'buku';
+  const contentLabel = isBuku ? 'catatan bab dari buku' : 'materi pembelajaran';
+
+  const systemPrompt = `Kamu adalah penulis dan komunikator edukasi yang andal.
+Tugasmu adalah mengolah ulang ${contentLabel} menjadi narasi yang lebih mudah dipahami dan engaging, TANPA menghilangkan substansi materinya.
+
+PEDOMAN:
+- WAJIB mempertahankan semua konsep, definisi, dan detail penting dari teks asli.
+- Jelaskan konsep yang kompleks menggunakan analogi, perumpamaan, atau contoh kehidupan nyata jika membantu.
+- JANGAN meringkas berlebihan — tujuannya mengolah gaya bahasa, bukan memotong isi.
+Gunakan gaya penulisan: ${getStyleInstruction(style)}
+Output berupa narasi/penjelasan dalam format teks biasa yang rapi (boleh menggunakan Markdown dasar untuk penekanan), tanpa blok kode json.`;
+
+  const userPrompt = `Topik: ${tag.title}
+Bagian: ${chapter.chapterNumber} - ${chapter.chapterTitle}
+
+Materi asli yang harus dijadikan dasar:
+---
+${chapter.originalContent}
+---
+
+Olahlah materi di atas menjadi narasi yang lebih hidup dan mudah dipahami, dengan tetap mempertahankan semua konsep pentingnya.`;
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) throw new Error("Failed to generate chapter story.");
+  const data = await response.json();
+  return data.choices[0].message.content.trim();
+}
+
+export async function generatePodcastScript(tag: KnowledgeTag, chapters: KnowledgeChapter[], scope: 'chapter'|'full', targetMinutes: number): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set.");
+
+  const targetWords = Math.round((targetMinutes / 5) * 650); // ~130 wpm
+
+  // Include both story version AND original to maximize RAG grounding
+  const contentContext = chapters.map(c => {
+    const mainContent = c.storyVersion
+      ? `[Versi Narasi]\n${c.storyVersion}\n\n[Catatan Asli]\n${c.originalContent}`
+      : c.originalContent;
+    return `=== BAGIAN ${c.chapterNumber}: ${c.chapterTitle} ===\n${mainContent}`;
+  }).join("\n\n");
+
+  const isBuku = tag.type === 'buku';
+  const topicLabel = isBuku ? `buku "${tag.title}"` : `topik "${tag.title}"`;
+  const ctaText = isBuku
+    ? `dorong pendengar untuk membaca ${topicLabel} sendiri atau mengeksplorasi lebih dalam`
+    : 'dorong pendengar untuk terus belajar, mencoba sendiri konsep yang dibahas, dan mengeksplorasi sumber lebih lanjut';
+
+  const systemPrompt = `Kamu adalah host podcast edukasi yang berpengalaman dan komunikatif.
+Tugasmu adalah membuat skrip podcast berdurasi kurang lebih ${targetMinutes} menit (sekitar ${targetWords} kata) yang BENAR-BENAR MENJELASKAN DAN MENGAJARKAN materi dari teks yang disediakan.
+
+Gaya bahasa: ${getStyleInstruction(tag.writingStyle)}
+
+ATURAN PALING PENTING — WAJIB DIIKUTI:
+1. GUNAKAN MATERI YANG DIBERIKAN sebagai sumber utama dan satu-satunya. Semua pembahasan harus berdasar pada teks yang tersedia — jangan mengarang atau menambahkan informasi di luar teks.
+2. JELASKAN KONSEP SECARA MENDALAM: jika ada algoritma, teori, metode, atau istilah teknis, jelaskan cara kerjanya, bukan sekadar menyebut namanya. Gunakan analogi, contoh konkret, atau perumpamaan agar mudah dipahami.
+3. JANGAN PARAFRASE DANGKAL — bedah isinya. Pendengar harus benar-benar paham konsep setelah mendengar episode ini.
+4. Ini BUKAN review buku. Ini adalah episode edukasi yang mengajarkan isi materi.
+
+Struktur Skrip yang WAJIB diikuti:
+
+[INTRO] ~60 detik
+- Sapa pendengar dengan antusias dan natural.
+- Sebutkan judul episode dan topik yang akan dibahas.
+- Hook: berikan pertanyaan atau skenario yang membuat pendengar ingin tahu lebih.
+
+[SEGMEN UTAMA] (satu atau beberapa bagian sesuai cakupan)
+- Bahas setiap bagian/bab satu per satu dengan urutan yang logis.
+- Untuk setiap konsep/poin penting: (1) jelaskan apa itu, (2) jelaskan cara kerjanya atau mengapa demikian, (3) berikan contoh atau analogi nyata.
+- Gunakan transisi yang mengalir antar bagian.
+- Sertakan momen-momen interaktif seperti pertanyaan retoris atau "bayangkan jika...".
+
+[OUTRO] ~45 detik
+- Rekap 3-5 poin utama yang telah dibahas secara konkret.
+- ${ctaText}.
+- Closing yang hangat dan mudah diingat.
+
+Format penulisan skrip:
+- Gunakan penanda HOST: untuk setiap bagian ucapan.
+- Gunakan kurung siku untuk keterangan teknis audio, misalnya: [MUSIK INTRO FADE OUT], [JEDA SINGKAT].
+- Tulis dalam format Markdown.`;
+
+  const userPrompt = `Judul Topik: ${tag.title}
+Kategori: ${tag.category} | Tipe: ${tag.type}
+Cakupan episode ini: ${scope === 'chapter' ? 'Satu Bagian/Bab' : 'Full Episode (semua bagian)'}
+Target durasi: ${targetMinutes} menit (~${targetWords} kata)
+
+Berikut adalah MATERI SUMBER yang WAJIB menjadi dasar skrip podcast ini:
+---
+${contentContext}
+---
+
+Buat skrip podcast edukasi lengkap dari Intro sampai Outro. Pastikan semua konsep dalam materi di atas dibahas dan dijelaskan dengan tuntas dalam skrip.`;
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) throw new Error("Failed to generate podcast script.");
+  const data = await response.json();
+  return data.choices[0].message.content.trim();
+}
+
+export async function chatWithBook(tag: KnowledgeTag, userMessage: string, history: any[], relevantChapters: KnowledgeChapter[]): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set.");
+
+  const contextText = relevantChapters.map(c => `[Bagian ${c.chapterNumber} - ${c.chapterTitle}]:\n${c.originalContent}`).join("\n\n---\n\n");
+
+  const contentLabel = tag.type === 'buku' ? `buku "${tag.title}"` : `materi "${tag.title}"`;
+  
+  const systemPrompt = `Kamu adalah Asisten AI untuk ${contentLabel}.
+Tugasmu adalah menjawab pertanyaan pengguna SECARA SPESIFIK berdasarkan Teks Referensi yang diberikan dari knowledge base.
+
+ATURAN PENTING:
+1. Jika Teks Referensi mengandung jawaban, jawablah secara detail dan informatif berdasarkan teks tersebut. Jelaskan konsep dengan baik.
+2. Jika Teks Referensi TIDAK mengandung jawaban, katakan dengan jujur bahwa informasi tersebut tidak ditemukan di materi yang tersimpan, tapi kamu bisa mencoba menjawab berdasarkan pengetahuan umummu jika relevan (berikan peringatan bahwa itu bukan dari teks materi).
+3. Gunakan gaya bahasa: ${getStyleInstruction(tag.writingStyle)}
+4. Jangan membuat-buat informasi (halusinasi) mengenai isi materi.
+
+=== TEKS REFERENSI ===
+${contextText || '(Tidak ada teks referensi spesifik yang ditemukan untuk pertanyaan ini)'}
+======================`;
+
+  const messages = [
+    { role: "system", content: systemPrompt },
+    ...history.map(msg => ({ role: msg.role, content: msg.content })),
+    { role: "user", content: userMessage }
+  ];
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: messages,
+      temperature: 0.5,
+    }),
+  });
+
+  if (!response.ok) {
+    console.error("OpenAI Chat Error", await response.text());
+    throw new Error("Failed to get chat response.");
+  }
+  
+  const data = await response.json();
+  return data.choices[0].message.content.trim();
 }

@@ -21,8 +21,9 @@ async function inlineImages(container: HTMLElement) {
     if (!src || src.startsWith("data:")) return
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 4000)
-      const resp = await fetch(src, { mode: "cors", signal: controller.signal })
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(src)}`
+      const resp = await fetch(proxyUrl, { signal: controller.signal })
       clearTimeout(timeoutId)
       if (!resp.ok) return
       const blob = await resp.blob()
@@ -46,8 +47,9 @@ async function inlineImages(container: HTMLElement) {
     if (!src || src.startsWith("data:")) return
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 4000)
-      const resp = await fetch(src, { mode: "cors", signal: controller.signal })
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(src)}`
+      const resp = await fetch(proxyUrl, { signal: controller.signal })
       clearTimeout(timeoutId)
       if (!resp.ok) return
       const blob = await resp.blob()
@@ -254,6 +256,9 @@ export function LiveBanner({ title, author, imageUrl, format }: LiveBannerProps)
             <CustomBannerRenderer
               elements={activeElements}
               bgColor={bgColor}
+              bgImage={activeDbBanner.backgroundImage}
+              bgImageOpacity={activeDbBanner.backgroundImageOpacity}
+              bgBlendMode={activeDbBanner.backgroundBlendMode}
               width={W}
               height={H}
               data={{

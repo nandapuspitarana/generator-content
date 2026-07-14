@@ -1,12 +1,13 @@
 export async function runDesigner(title: string, author: string, format: 'MEDIUM_16_9' | 'INSTAGRAM_1_1', processedImageUrl: string | undefined, apiKey: string): Promise<string> {
   // For Medium 16:9: image fills entire right panel as absolute cover
+  // Use a placeholder [IMAGE_URL_PLACEHOLDER] for the image URL when sending template to LLM to prevent large base64 payload size.
   const imageFillPanel = processedImageUrl
-    ? `<img src="${processedImageUrl}" alt="Book Cover" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;" />`
+    ? `<img src="[IMAGE_URL_PLACEHOLDER]" alt="Book Cover" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;" />`
     : `<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;color:#666;font-size:11px;">Upload Cover</div>`;
 
   // For Instagram 1:1: centered book with natural 2:3 ratio
   const imageCentered = processedImageUrl
-    ? `<img src="${processedImageUrl}" alt="Book Cover" style="width:200px;height:300px;object-fit:cover;border-radius:4px;box-shadow:0 12px 40px rgba(0,0,0,0.6);display:block;" />`
+    ? `<img src="[IMAGE_URL_PLACEHOLDER]" alt="Book Cover" style="width:200px;height:300px;object-fit:cover;border-radius:4px;box-shadow:0 12px 40px rgba(0,0,0,0.6);display:block;" />`
     : `<div style="width:200px;height:300px;background:#2a2a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#666;font-size:11px;">Upload Cover</div>`;
 
   let templateInstructions = '';
@@ -90,12 +91,21 @@ Berikan saya HTML banner-nya sekarang tanpa teks basa-basi.`;
     }),
   });
 
-  if (!response.ok) throw new Error("Designer agent failed to respond.");
+  if (!response.ok) {
+    const errorDetails = await response.text().catch(() => "");
+    console.error(`Designer agent OpenAI request failed. Status: ${response.status}. Error: ${errorDetails}`);
+    throw new Error("Designer agent failed to respond.");
+  }
   
   const data = await response.json();
   let content = data.choices[0].message.content;
-  if (content.startsWith("\`\`\`html")) {
-    content = content.replace(/\`\`\`html\n?/g, "").replace(/\`\`\`/g, "");
+  if (content.startsWith("```html")) {
+    content = content.replace(/```html\n?/g, "").replace(/```/g, "");
   }
-  return content.trim();
+  
+  content = content.trim();
+  if (processedImageUrl) {
+    content = content.replaceAll("[IMAGE_URL_PLACEHOLDER]", processedImageUrl);
+  }
+  return content;
 }

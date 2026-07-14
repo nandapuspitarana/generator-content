@@ -1,30 +1,93 @@
-export async function runPodcaster(topic: string, author: string, notes: string, length: string, apiKey: string): Promise<string> {
-  const systemPrompt = `Kamu adalah AI Penulis Naskah Podcast Profesional.
-Tugasmu adalah menulis naskah podcast yang terstruktur dengan gaya bahasa lisan yang santai, asik, dan interaktif (seperti penyiar radio hits atau konten kreator YouTube yang engaging).
+export function chunkText(text: string, maxLength: number = 40000): string[] {
+  if (text.length <= maxLength) return [text];
+  
+  const chunks: string[] = [];
+  let currentPos = 0;
+  
+  while (currentPos < text.length) {
+    if (currentPos + maxLength >= text.length) {
+      chunks.push(text.slice(currentPos));
+      break;
+    }
+    
+    // Cari batas newline ganda (paragraf)
+    let breakPoint = text.lastIndexOf('\n\n', currentPos + maxLength);
+    if (breakPoint <= currentPos) {
+      // Jika tidak ada, cari newline tunggal
+      breakPoint = text.lastIndexOf('\n', currentPos + maxLength);
+      if (breakPoint <= currentPos) {
+        breakPoint = currentPos + maxLength; // paksa potong
+      }
+    }
+    
+    chunks.push(text.slice(currentPos, breakPoint));
+    currentPos = breakPoint;
+  }
+  
+  return chunks;
+}
 
-Struktur naskah wajib ditandai dengan 3 bagian utama:
-1. **[INTRO]**: Sapaan pembuka yang energik, perkenalan diri ("Halo, saya [Nama Host]..."), dan pancingan penasaran (hook) tentang topik yang akan dibahas.
-2. **[BODY]**: Isi utama podcast. Elaborasi topik atau ulasan buku secara mendalam. Gunakan gaya penceritaan (storytelling) dan berikan contoh nyata agar pendengar betah.
-3. **[OUTRO]**: Kesimpulan ringkas, ucapan terima kasih kepada pendengar, dan Call-To-Action (ajakan untuk mengecek tautan di deskripsi/link afiliasi), diakhiri salam penutup.
+async function runContentCreator(topic: string, chunk: string, index: number, total: number, apiKey: string): Promise<string> {
+  const systemPrompt = `Kamu adalah Agen Content Creator untuk sebuah podcast.
+Tugasmu adalah membaca sebagian (chunk ${index + 1} dari ${total}) dari teks referensi tentang topik "${topic}", lalu mengekstrak inti-inti materinya menjadi sebuah naskah kasar/monolog (draft segmen).
+Fokus pada substansi: jelaskan konsep, ide, dan informasi penting dari teks ini dengan cara yang mendidik namun santai.
+Jangan membuat intro/outro podcast (seperti "Halo semua"), langsung bahas isi materinya saja karena ini hanya akan jadi satu segmen dari podcast utuh.
+Tulis dalam format teks biasa (plain text), jangan gunakan markdown (**).`;
 
-Instruksi Panjang Naskah:
-Naskah ini diminta dalam ukuran durasi/panjang: ${length.toUpperCase()}.
-- SHORT (Pendek): Target 300 - 500 kata. Padat, cepat, langsung ke poin (sekitar 3-5 menit dibaca).
-- MEDIUM (Sedang): Target 700 - 1000 kata. Standar durasi podcast menengah (sekitar 7-10 menit dibaca).
-- LONG (Panjang): Target 1500 - 2000 kata. Sangat mendetail, eksploratif, dan mendalam (sekitar 15-20 menit dibaca).
-Pastikan panjang naskah yang dihasilkan secara akurat mencerminkan target panjang ini!
+  const userPrompt = `Teks Referensi (Bagian ${index + 1} dari ${total}):\n\n${chunk}\n\nBuatlah draft segmen podcast dari materi di atas.`;
 
-Aturan Format:
-Kembalikan teks berformat Markdown yang rapi. Gunakan huruf tebal (bold) untuk penekanan intonasi suara, dan cetak miring (italic) untuk efek suara atau instruksi (*tarik napas*, *tertawa kecil*, *jeda 2 detik*).
-`
+  return await callOpenAI("gpt-4o-mini", systemPrompt, userPrompt, apiKey);
+}
 
-  const userPrompt = `Tolong buatkan naskah podcast berdasarkan detail berikut:
-- Topik / Judul Buku: ${topic}
-- Nama Host: ${author}
-- Catatan Tambahan: ${notes || "Tidak ada catatan tambahan. Fokus bahas buku/topik tersebut secara umum."}
-- Target Panjang Naskah: ${length}
-`
+async function runEditor(topic: string, draft: string, apiKey: string): Promise<string> {
+  const systemPrompt = `Kamu adalah Agen Editor Naskah Podcast Profesional.
+Tugasmu adalah memoles draft kasar segmen podcast tentang "${topic}" menjadi naskah yang sangat asik didengar, mengalir (conversational), dan enak dibaca oleh pengisi suara.
+Aturan:
+1. Ubah bahasa yang terlalu kaku menjadi gaya bahasa lisan (storytelling) yang natural dan engaging.
+2. JANGAN tambahkan sapaan pembuka (intro) atau penutup (outro). Tetap jadikan ini segmen isi (body).
+3. HANYA Teks Murni (Plain Text). JANGAN gunakan Markdown (jangan ada **bold** atau # heading).
+4. Gunakan tag SSML <break time="1s"/> atau <break time="1.5s"/> di antara poin penting agar ada jeda natural saat dibacakan.`;
 
+  const userPrompt = `Draft Segmen Kasar:\n\n${draft}\n\nTolong edit dan perbaiki naskah ini agar lebih asik didengar (lisan) dan tambahkan tag jeda SSML yang tepat.`;
+
+  return await callOpenAI("gpt-4o-mini", systemPrompt, userPrompt, apiKey);
+}
+
+async function runBundler(topic: string, author: string, segments: string[], notes: string, length: string, apiKey: string): Promise<string> {
+  const systemPrompt = `Kamu adalah Agen Bundler Podcast Utama (Head Writer).
+Tugasmu adalah menyatukan beberapa segmen naskah yang terpisah menjadi satu naskah podcast utuh yang super mulus (seamless), asik, dan menarik.
+
+Struktur yang harus kamu buat:
+1. Intro: Sapa pendengar dengan hangat, sebutkan namamu (${author}) sebagai host, dan berikan pancingan (hook) kuat tentang topik "${topic}".
+2. Body: Rangkai segmen-segmen yang diberikan. Kamu BEBAS menambahkan kalimat transisi antar segmen agar ceritanya mengalir dengan sangat mulus.
+3. Outro: Kesimpulan yang kuat, pesan penutup (call to action untuk terus belajar/mencari tahu), dan salam penutup.
+
+Catatan Tambahan Khusus (JIKA ADA, WAJIB IKUTI):
+${notes || "Tidak ada catatan tambahan."}
+
+Instruksi Panjang Naskah: Target panjang naskah akhir adalah ${length.toUpperCase()}.
+- SHORT: ~400 kata
+- MEDIUM: ~850 kata
+- LONG: ~1800 kata
+Sesuaikan elaborasi dan kecepatan alur cerita untuk mencapai target durasi ini sebaik mungkin.
+
+Aturan Format (SANGAT PENTING - ElevenLabs Compatible):
+1. Hasil akhir HARUS berupa Teks Murni (Plain Text) yang langsung siap dibacakan oleh mesin Text-to-Speech (seperti ElevenLabs).
+2. JANGAN gunakan format Markdown (jangan gunakan **bold**, *italic*, atau # heading).
+3. JANGAN tuliskan instruksi panggung atau nama pembicara (seperti "Host:", "[Tarik Napas]").
+4. WAJIB sisipkan jeda antar kalimat/paragraf dengan tag SSML:
+   - <break time="1s"/> untuk jeda standar.
+   - <break time="1.5s"/> untuk transisi ide.
+   - <break time="2s"/> untuk jeda dramatis di Intro/Outro.`;
+
+  const combinedSegments = segments.map((seg, i) => `--- SEGMEN ${i + 1} ---\n${seg}`).join("\n\n");
+
+  const userPrompt = `Tolong satukan dan buat naskah final podcast berdasarkan segmen-segmen berikut:\n\n${combinedSegments}`;
+
+  return await callOpenAI("gpt-4o", systemPrompt, userPrompt, apiKey);
+}
+
+async function callOpenAI(model: string, systemPrompt: string, userPrompt: string, apiKey: string): Promise<string> {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -32,7 +95,7 @@ Kembalikan teks berformat Markdown yang rapi. Gunakan huruf tebal (bold) untuk p
       "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "gpt-4o",
+      model: model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -43,9 +106,34 @@ Kembalikan teks berformat Markdown yang rapi. Gunakan huruf tebal (bold) untuk p
 
   if (!response.ok) {
     const err = await response.text();
-    throw new Error("Podcaster agent failed: " + err);
+    throw new Error(`OpenAI Agent (${model}) failed: ` + err);
   }
   
   const data = await response.json();
-  return data.choices[0].message.content;
+  let content = data.choices[0].message.content.trim();
+  if (content.startsWith("```markdown")) {
+    content = content.replace(/^```markdown\n?/i, "").replace(/\n?```$/i, "").trim();
+  } else if (content.startsWith("```")) {
+    content = content.replace(/^```\n?/i, "").replace(/\n?```$/i, "").trim();
+  }
+  
+  return content;
+}
+
+export async function runPodcaster(topic: string, author: string, sourceText: string, notes: string, length: string, apiKey: string): Promise<string> {
+  // 1. Chunking text (max 40k chars per chunk to safely fit gpt-4o-mini window and response limits)
+  const chunks = chunkText(sourceText, 40000);
+  
+  // 2. Content Creator (Map)
+  const creatorPromises = chunks.map((chunk, i) => runContentCreator(topic, chunk, i, chunks.length, apiKey));
+  const rawSegments = await Promise.all(creatorPromises);
+  
+  // 3. Editor (Map)
+  const editorPromises = rawSegments.map(segment => runEditor(topic, segment, apiKey));
+  const editedSegments = await Promise.all(editorPromises);
+  
+  // 4. Bundler (Reduce)
+  const finalScript = await runBundler(topic, author, editedSegments, notes, length, apiKey);
+  
+  return finalScript;
 }

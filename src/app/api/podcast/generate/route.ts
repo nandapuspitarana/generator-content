@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import esClient from '@/lib/elasticsearch'
 import { runPodcaster } from '@/lib/services/agents/podcaster'
 
 export async function POST(req: Request) {
@@ -26,12 +27,37 @@ export async function POST(req: Request) {
     if (data.articleId) {
       const sourceArticle = await prisma.article.findUnique({ where: { id: data.articleId } })
       if (sourceArticle?.markdownContent) {
-        sourceContent = `\n\n=== MATERI REFERENSI UTAMA (ARTIKEL SUMBER) ===\n${sourceArticle.markdownContent}`
+        sourceContent += `\n\n=== MATERI REFERENSI UTAMA (ARTIKEL SUMBER) ===\n${sourceArticle.markdownContent}`
       }
     }
 
-    // 2. Jalankan AI Podcaster Agent
-    const podcastScript = await runPodcaster(data.title, data.author, data.notes + sourceContent, data.length, apiKey)
+    if (data.knowledgeTagSlug) {
+      try {
+        const chapRes = await esClient.search({
+          index: 'acg_knowledge_chapters',
+          size: 100,
+          query: { match: { tagSlug: data.knowledgeTagSlug } },
+          sort: [{ chapterNumber: { order: 'asc', unmapped_type: 'long' } }]
+        })
+        const chapters = chapRes.hits.hits.map((h: any) => h._source)
+        if (chapters.length > 0) {
+          const ragText = chapters.map((c: any) => {
+            // Prioritaskan konten yang sudah diringkas agar tidak over-token
+            const contentToUse = c.summary || c.storyVersion || c.originalContent || "";
+            // Batasi per chapter max 10.000 karakter jika sangat panjang
+            return `[Bagian ${c.chapterNumber} - ${c.chapterTitle}]:\n${contentToUse.substring(0, 10000)}`;
+          }).join("\n\n---\n\n")
+          sourceContent += `\n\n=== MATERI REFERENSI RAG (KNOWLEDGE BASE) ===\n${ragText}`
+        }
+      } catch (err) {
+        console.error("Error fetching RAG for podcast:", err)
+      }
+    }
+
+
+    // 2. Jalankan AI Podcaster Agent (Multi-Agent Pipeline)
+    const notesStr = data.notes ? data.notes : "";
+    const podcastScript = await runPodcaster(data.title, data.author, sourceContent, notesStr, data.length, apiKey)
 
     // 3. Simpan naskah dan set status menjadi READY
     const finalArticle = await prisma.article.update({

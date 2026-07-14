@@ -91,7 +91,7 @@ export default async function DashboardPage() {
               Schedule
             </h3>
             <Link
-              href="/dashboard/calendar"
+              href="/dashboard/articles"
               className="text-secondary hover:text-on-surface transition-colors"
             >
               <span className="material-symbols-outlined">more_horiz</span>
@@ -126,10 +126,10 @@ export default async function DashboardPage() {
             )}
           </div>
           <Link
-            href="/dashboard/calendar"
+            href="/dashboard/articles"
             className="mt-6 w-full py-2 px-4 border border-outline-variant rounded-lg text-sm font-medium text-center text-on-surface hover:bg-surface-container transition-colors block"
           >
-            View Full Calendar
+            View All Articles
           </Link>
         </section>
 
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
             </h3>
             <Link
               className="text-sm font-medium text-primary hover:underline"
-              href="/dashboard/calendar"
+              href="/dashboard/articles"
             >
               View All
             </Link>

@@ -53,10 +53,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
         <ul className="flex flex-col gap-1 flex-grow">
           <NavLink href="/dashboard" icon="home" label="Overview" exact />
+          <NavLink href="/dashboard/articles" icon="view_list" label="Articles" />
           <NavLink href="/dashboard/discovery" icon="travel_explore" label="Discovery" />
-          <NavLink href="/dashboard/calendar" icon="calendar_month" label="Calendar" />
-          <NavLink href="/dashboard/analytics" icon="query_stats" label="Analytics" />
           <NavLink href="/dashboard/canvas" icon="brush" label="Canvas" />
+          <NavLink href="/dashboard/knowledge" icon="menu_book" label="Knowledge Base" />
         </ul>
         <div className="mt-auto pt-6 border-t border-outline-variant flex flex-col gap-2">
           <Link

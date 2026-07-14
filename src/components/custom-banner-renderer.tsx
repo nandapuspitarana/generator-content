@@ -6,6 +6,9 @@ import { CanvasElement } from "@/app/dashboard/canvas/[id]/page"
 interface CustomBannerRendererProps {
   elements: CanvasElement[]
   bgColor: string
+  bgImage?: string
+  bgImageOpacity?: number
+  bgBlendMode?: string
   width: number
   height: number
   data: {
@@ -19,7 +22,7 @@ interface CustomBannerRendererProps {
   }
 }
 
-export function CustomBannerRenderer({ elements, bgColor, width, height, data }: CustomBannerRendererProps) {
+export function CustomBannerRenderer({ elements, bgColor, bgImage, bgImageOpacity = 1, bgBlendMode = "normal", width, height, data }: CustomBannerRendererProps) {
   const renderElementContent = (el: CanvasElement) => {
     let text = el.text
     let src = el.src
@@ -53,16 +56,19 @@ export function CustomBannerRenderer({ elements, bgColor, width, height, data }:
           </div>
         )
       }
+      const alignMap = { left: "flex-start", center: "center", right: "flex-end", justify: "flex-start" }
+      const jc = alignMap[el.textAlign || "left"]
       return (
-        <div style={{ width: "100%", height: "100%", fontSize: `${el.fontSize}px`, color: currentColor, fontWeight: el.fontWeight, textAlign: el.textAlign || "left", display: "flex", alignItems: "center", lineHeight: 1.2 }}>
+        <div style={{ width: "100%", height: "100%", fontSize: `${el.fontSize}px`, color: currentColor, fontWeight: el.fontWeight, textAlign: el.textAlign || "left", display: "flex", alignItems: "center", justifyContent: jc, lineHeight: el.lineHeight || 1.2, letterSpacing: `${el.letterSpacing || 0}px`, whiteSpace: el.textWrap || "pre-wrap", wordBreak: "break-word" }}>
           {text}
         </div>
       )
     }
     
     if (el.type === "image" && src) {
+      const proxySrc = src.startsWith('data:') ? src : `/api/proxy-image?url=${encodeURIComponent(src)}`;
       // eslint-disable-next-line @next/next/no-img-element
-      return <img src={src} alt="element" style={{ width: "100%", height: "100%", objectFit: el.objectFit || "cover", pointerEvents: "none", borderRadius: `${el.borderRadius || 0}px` }} crossOrigin="anonymous" />
+      return <img src={proxySrc} alt="element" style={{ width: "100%", height: "100%", objectFit: el.objectFit || "cover", objectPosition: `${el.objectPositionX ?? 50}% ${el.objectPositionY ?? 50}%`, opacity: el.opacity ?? 1, mixBlendMode: (el.blendMode || "normal") as any, pointerEvents: "none", borderRadius: `${el.borderRadius || 0}px` }} crossOrigin="anonymous" />
     }
     
     if (el.type === "shape") {
@@ -71,10 +77,22 @@ export function CustomBannerRenderer({ elements, bgColor, width, height, data }:
     return null
   }
 
-  const topLevelElements = elements.filter(el => !el.groupId)
+  const topLevelElements = elements.filter(el => !el.groupId && !el.hidden)
 
   return (
-    <div style={{ width: width, height: height, backgroundColor: bgColor, position: "relative", overflow: "hidden" }}>
+    <div style={{ 
+      width: width, height: height, 
+      backgroundColor: bgColor, 
+      backgroundImage: bgImage ? `url(${bgImage})` : undefined,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundBlendMode: bgBlendMode,
+      position: "relative", overflow: "hidden" 
+    }}>
+      {bgImage && (
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${bgImage})`, backgroundSize: "cover", backgroundPosition: "center", opacity: bgImageOpacity, mixBlendMode: bgBlendMode as any, pointerEvents: "none", zIndex: 0 }} />
+      )}
+      
       {topLevelElements.map((el) => {
         return (
           <div 
@@ -90,7 +108,7 @@ export function CustomBannerRenderer({ elements, bgColor, width, height, data }:
           >
             {el.type === "group" ? (
               <div className="w-full h-full relative">
-                {elements.filter(child => child.groupId === el.id).map(child => (
+                {elements.filter(child => child.groupId === el.id && !child.hidden).map(child => (
                   <div key={child.id} style={{ position: "absolute", left: child.x, top: child.y, width: child.w, height: child.h, zIndex: child.zIndex || 1 }}>
                     {renderElementContent(child)}
                   </div>

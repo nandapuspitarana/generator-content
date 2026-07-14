@@ -5,6 +5,8 @@ import { runWriter } from '@/lib/services/agents/writer'
 import { runEditor } from '@/lib/services/agents/editor'
 import { runDesigner } from '@/lib/services/agents/designer'
 import { runEvaluator } from '@/lib/services/agents/evaluator'
+import { runPodcaster } from '@/lib/services/agents/podcaster'
+import esClient from '@/lib/elasticsearch'
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -15,9 +17,73 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return NextResponse.json({ error: 'API Key missing' }, { status: 500 })
 
+    let extendedNotes = article.notes || '';
+    if (article.knowledgeTagSlug) {
+      try {
+        const tagRes = await esClient.search({
+          index: 'acg_knowledge_tags',
+          query: { match: { slug: article.knowledgeTagSlug } }
+        });
+        const tagDoc: any = tagRes.hits.hits[0]?._source;
+
+        const chapterRes = await esClient.search({
+          index: 'acg_knowledge_chapters',
+          query: {
+            bool: {
+              must: [
+                { match: { tagSlug: article.knowledgeTagSlug } },
+                {
+                  multi_match: {
+                    query: article.title + " " + (article.notes || ''),
+                    fields: ['chapterTitle^2', 'originalContent']
+                  }
+                }
+              ]
+            }
+          },
+          size: 3
+        });
+        const chapters = chapterRes.hits.hits.map((h: any) => h._source);
+        
+        let kbContext = `\n\n[INFO BUKU (KNOWLEDGE BASE)]\n`;
+        if (tagDoc && tagDoc.summary) kbContext += `Ringkasan Buku: ${tagDoc.summary}\n\n`;
+        if (chapters.length > 0) {
+          kbContext += `Referensi Bab Terkait:\n`;
+          chapters.forEach((c: any) => {
+            kbContext += `- Bab ${c.chapterNumber} (${c.chapterTitle}):\n${c.originalContent.substring(0, 1500)}...\n\n`;
+          });
+        }
+        extendedNotes += kbContext;
+      } catch (e) {
+        console.error("Failed to fetch knowledge base for generation", e);
+      }
+    }
+
+    if (article.contentType === 'PODCAST') {
+      await prisma.article.update({ where: { id: article.id }, data: { status: 'DRAFTING' } })
+      const podcastScript = await runPodcaster(
+        article.title, 
+        article.author || 'AI Host', 
+        extendedNotes, 
+        article.notes || '', 
+        'MEDIUM', 
+        apiKey
+      )
+      
+      const finalArticle = await prisma.article.update({
+        where: { id: article.id },
+        data: { 
+          status: 'READY', 
+          markdownContent: podcastScript 
+        },
+        include: { assets: true }
+      })
+      return NextResponse.json(finalArticle)
+    }
+
     // Step 1: Ideator
     await prisma.article.update({ where: { id: article.id }, data: { status: 'IDEATION' } })
-    const outline = await runIdeator(article.title, article.author, article.notes || '', apiKey)
+    const outline = await runIdeator(article.title, article.author, extendedNotes, apiKey)
 
     // Step 2: Writer
     await prisma.article.update({ where: { id: article.id }, data: { status: 'DRAFTING' } })

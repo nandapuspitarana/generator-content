@@ -12,22 +12,23 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json()
-    const { title, author, notes, affiliateLink, imageUrl, scheduledAt } = body
-
-    const article = await prisma.article.create({
-      data: {
-        title,
-        author,
-        notes,
-        affiliateLink,
-        imageUrl,
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-        status: 'IDEATION'
-      }
-    })
+  export async function POST(req: Request) {
+    try {
+      const body = await req.json()
+      const { title, author, notes, affiliateLink, imageUrl, scheduledAt, knowledgeTagSlug } = body
+  
+      const article = await prisma.article.create({
+        data: {
+          title,
+          author,
+          notes,
+          affiliateLink,
+          imageUrl,
+          knowledgeTagSlug,
+          scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+          status: 'IDEATION'
+        }
+      })
 
     return NextResponse.json(article)
   } catch (error) {

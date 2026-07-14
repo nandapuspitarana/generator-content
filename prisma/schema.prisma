@@ -22,6 +22,7 @@ model Article {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   publishedAt     DateTime?
+  knowledgeTagSlug String?
   monetizationValue Float?       @default(0)
   assets          ArticleAsset[]
   metrics         PostMetric[]
@@ -68,8 +69,11 @@ model Banner {
   badgeText       String   @default("")
   tags            String   @default("") // comma-separated
   imageUrl        String   @default("")
-  elements        String   @default("[]") // JSON string of canvas elements
-  backgroundColor String   @default("#ffffff")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  elements               String   @default("[]") // JSON string of canvas elements
+  backgroundColor        String   @default("#ffffff")
+  backgroundImage        String   @default("") // base64 or URL for canvas background image
+  backgroundImageOpacity Float    @default(1)
+  backgroundBlendMode    String   @default("normal")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
