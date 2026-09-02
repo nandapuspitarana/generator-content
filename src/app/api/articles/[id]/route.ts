@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import { ArticleInputSchema } from "@/lib/validation/schemas"
 
 export async function PUT(
   request: Request,
@@ -8,19 +9,27 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json()
-    const { title, author, markdownContent, notes, affiliateLink, imageUrl, scheduledAt, status } = body
+    const validationResult = ArticleInputSchema.partial().safeParse(body)
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.issues.map(i => i.message).join(", ")
+      return NextResponse.json({ error: errorMsg, details: validationResult.error.issues }, { status: 400 })
+    }
+
+    const { title, author, markdownContent, notes, affiliateLink, imageUrl, scheduledAt, status, knowledgeTagSlug } = validationResult.data
 
     const updated = await prisma.article.update({
       where: { id },
       data: {
-        title,
-        author,
-        markdownContent,
-        notes,
-        affiliateLink,
-        imageUrl,
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-        status: status || 'IDEATION'
+        ...(title !== undefined && { title }),
+        ...(author !== undefined && { author }),
+        ...(markdownContent !== undefined && { markdownContent }),
+        ...(notes !== undefined && { notes }),
+        ...(affiliateLink !== undefined && { affiliateLink }),
+        ...(imageUrl !== undefined && { imageUrl }),
+        ...(knowledgeTagSlug !== undefined && { knowledgeTagSlug }),
+        ...(scheduledAt !== undefined && { scheduledAt: scheduledAt ? new Date(scheduledAt) : null }),
+        ...(status !== undefined && { status: status || 'IDEATION' })
       }
     })
 

@@ -1,25 +1,34 @@
 import { NextResponse } from "next/server"
 import { generateContent } from "@/lib/services/llm"
+import { QuickGenerateSchema } from "@/lib/validation/schemas"
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { title, author, notes, affiliateLink, imageUrl } = body
+    const validationResult = QuickGenerateSchema.safeParse(body)
 
-    if (!title || !author) {
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.issues.map(i => i.message).join(", ")
       return NextResponse.json(
-        { error: "Judul Buku dan Penulis wajib diisi." },
+        { error: errorMsg, details: validationResult.error.issues },
         { status: 400 }
       )
     }
 
-    const result = await generateContent({ title, author, notes, affiliateLink, imageUrl })
+    const { title, author, notes, affiliateLink, imageUrl } = validationResult.data
+    const result = await generateContent({ 
+      title, 
+      author, 
+      notes: notes || undefined, 
+      affiliateLink: affiliateLink || undefined, 
+      imageUrl: imageUrl || undefined 
+    })
     
     return NextResponse.json(result)
-  } catch (error) {
-    console.error("API Error:", error)
+  } catch (error: any) {
+    console.error("API /api/generate Error:", error)
     return NextResponse.json(
-      { error: "Gagal memproses request. Silakan coba lagi." },
+      { error: error.message || "Gagal memproses request. Silakan coba lagi." },
       { status: 500 }
     )
   }

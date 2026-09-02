@@ -2,14 +2,23 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import esClient from '@/lib/elasticsearch'
 import { runPodcaster } from '@/lib/services/agents/podcaster'
+import { PodcastGenerateSchema } from '@/lib/validation/schemas'
 
 export async function POST(req: Request) {
   try {
-    const data = await req.json()
+    const rawData = await req.json()
+    const validationResult = PodcastGenerateSchema.safeParse(rawData)
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.issues.map(i => i.message).join(", ")
+      return NextResponse.json({ error: errorMsg, details: validationResult.error.issues }, { status: 400 })
+    }
+
+    const data = validationResult.data
     const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      return NextResponse.json({ error: 'OPENAI_API_KEY is not set in .env.local' }, { status: 500 })
+      return NextResponse.json({ error: 'OPENAI_API_KEY is not set in environment variables' }, { status: 500 })
     }
 
     // 1. Buat entri awal di database dengan tipe PODCAST
@@ -17,7 +26,7 @@ export async function POST(req: Request) {
       data: {
         title: data.title,
         author: data.author,
-        notes: data.notes,
+        notes: data.notes || null,
         contentType: 'PODCAST',
         status: 'DRAFTING', 
       }
@@ -42,18 +51,15 @@ export async function POST(req: Request) {
         const chapters = chapRes.hits.hits.map((h: any) => h._source)
         if (chapters.length > 0) {
           const ragText = chapters.map((c: any) => {
-            // Prioritaskan konten yang sudah diringkas agar tidak over-token
             const contentToUse = c.summary || c.storyVersion || c.originalContent || "";
-            // Batasi per chapter max 10.000 karakter jika sangat panjang
             return `[Bagian ${c.chapterNumber} - ${c.chapterTitle}]:\n${contentToUse.substring(0, 10000)}`;
           }).join("\n\n---\n\n")
           sourceContent += `\n\n=== MATERI REFERENSI RAG (KNOWLEDGE BASE) ===\n${ragText}`
         }
       } catch (err) {
-        console.error("Error fetching RAG for podcast:", err)
+        console.error("Error fetching RAG for podcast (Elasticsearch might be offline):", err)
       }
     }
-
 
     // 2. Jalankan AI Podcaster Agent (Multi-Agent Pipeline)
     const notesStr = data.notes ? data.notes : "";
@@ -70,6 +76,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(finalArticle)
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("Podcast Generation Error:", error)
+    return NextResponse.json({ error: error.message || 'Failed to generate podcast' }, { status: 500 })
   }
 }

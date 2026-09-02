@@ -1,7 +1,7 @@
 export interface GeneratorFormData {
   title: string
   author: string
-  notes: string
+  notes?: string
   affiliateLink?: string
   imageUrl?: string
   scheduledAt?: string
