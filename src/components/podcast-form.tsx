@@ -27,6 +27,13 @@ export function PodcastForm({ onSubmit, isLoading, defaultValues, availableTags 
     knowledgeTagSlug: defaultValues?.knowledgeTagSlug || ""
   })
 
+  // Keep updated if defaultValues change
+  React.useEffect(() => {
+    if (defaultValues?.title) setFormData(prev => ({ ...prev, title: defaultValues.title || "" }))
+    if (defaultValues?.author) setFormData(prev => ({ ...prev, author: defaultValues.author || "" }))
+    if (defaultValues?.knowledgeTagSlug) setFormData(prev => ({ ...prev, knowledgeTagSlug: defaultValues.knowledgeTagSlug || "" }))
+  }, [defaultValues?.title, defaultValues?.author, defaultValues?.knowledgeTagSlug])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -39,99 +46,113 @@ export function PodcastForm({ onSubmit, isLoading, defaultValues, availableTags 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-1">
-          <label htmlFor="title" className="block text-sm font-medium text-on-surface">Topik / Judul Buku <span className="text-error">*</span></label>
+      <div className="space-y-5">
+        <div className="space-y-1.5">
+          <label htmlFor="title" className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919]">
+            Topik / Judul Episode <span className="text-[#c8102e]">*</span>
+          </label>
           <input
             id="title"
             name="title"
-            placeholder="Contoh: Atomic Habits oleh James Clear"
+            placeholder="Contoh: Menguasai Kebiasaan Atomik bersama James Clear"
             value={formData.title}
             onChange={handleChange}
             disabled={isLoading}
             required
-            className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
+            className="w-full h-11 px-3.5 rounded-lg bg-[#faf9f6] border border-[#e8e7e0] focus:border-[#191919] outline-none transition-all text-xs font-medium text-[#191919] disabled:opacity-50"
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="author" className="block text-sm font-medium text-on-surface">Nama Host / Podcaster <span className="text-error">*</span></label>
-          <input
-            id="author"
-            name="author"
-            placeholder="Contoh: Nanda Puspitarana"
-            value={formData.author}
-            onChange={handleChange}
-            disabled={isLoading}
-            required
-            className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
-          />
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label htmlFor="author" className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919]">
+              Nama Host / Podcaster <span className="text-[#c8102e]">*</span>
+            </label>
+            <input
+              id="author"
+              name="author"
+              placeholder="Nama Anda atau Host AI"
+              value={formData.author}
+              onChange={handleChange}
+              disabled={isLoading}
+              required
+              className="w-full h-11 px-3.5 rounded-lg bg-[#faf9f6] border border-[#e8e7e0] focus:border-[#191919] outline-none transition-all text-xs font-medium text-[#191919] disabled:opacity-50"
+            />
+          </div>
 
-        <div className="space-y-1">
-          <label htmlFor="length" className="block text-sm font-medium text-on-surface">Durasi / Panjang Naskah <span className="text-error">*</span></label>
-          <select
-            id="length"
-            name="length"
-            value={formData.length}
-            onChange={handleChange}
-            disabled={isLoading}
-            className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
-          >
-            <option value="SHORT">Pendek (300 - 500 kata / ~3-5 menit)</option>
-            <option value="MEDIUM">Sedang (700 - 1000 kata / ~7-10 menit)</option>
-            <option value="LONG">Panjang (1500 - 2000 kata / ~15-20 menit)</option>
-          </select>
+          <div className="space-y-1.5">
+            <label htmlFor="length" className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919]">
+              Target Durasi Naskah <span className="text-[#c8102e]">*</span>
+            </label>
+            <select
+              id="length"
+              name="length"
+              value={formData.length}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="w-full h-11 px-3.5 rounded-lg bg-[#faf9f6] border border-[#e8e7e0] focus:border-[#191919] outline-none transition-all text-xs font-medium text-[#191919] disabled:opacity-50 cursor-pointer"
+            >
+              <option value="SHORT">Short (~400 kata / ~3-5 menit)</option>
+              <option value="MEDIUM">Medium (~850 kata / ~7-10 menit)</option>
+              <option value="LONG">Long (~1800 kata / ~15-20 menit)</option>
+            </select>
+          </div>
         </div>
 
         {availableTags && availableTags.length > 0 && (
-          <div className="space-y-1">
-            <label htmlFor="knowledgeTagSlug" className="block text-sm font-medium text-on-surface">Knowledge Base Reference (Opsional)</label>
+          <div className="space-y-1.5">
+            <label htmlFor="knowledgeTagSlug" className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919]">
+              Knowledge Base Reference (RAG Source)
+            </label>
             <select
               id="knowledgeTagSlug"
               name="knowledgeTagSlug"
               value={formData.knowledgeTagSlug}
               onChange={handleChange}
               disabled={isLoading}
-              className="w-full h-11 px-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50"
+              className="w-full h-11 px-3.5 rounded-lg bg-[#faf9f6] border border-[#e8e7e0] focus:border-[#191919] outline-none transition-all text-xs font-medium text-[#191919] disabled:opacity-50 cursor-pointer"
             >
-              <option value="">Tidak pakai referensi materi</option>
+              <option value="">-- Tanpa referensi Knowledge Base --</option>
               {availableTags.map((t: any) => (
                 <option key={t.slug} value={t.slug}>{t.title} ({t.category} - {t.type})</option>
               ))}
             </select>
-            <p className="text-[11px] text-secondary mt-1">Pilih materi dari Knowledge Base untuk menggunakan fitur RAG (Retrieval-Augmented Generation) sebagai dasar script podcast ini.</p>
+            <p className="text-[11px] text-[#777777] mt-1 font-editorial-serif">
+              Materi buku dari Knowledge Base akan disuntikkan ke prompt RAG agar naskah podcast berbobot dan akurat.
+            </p>
           </div>
         )}
 
-        <div className="space-y-1">
-          <label htmlFor="notes" className="block text-sm font-medium text-on-surface">Catatan Tambahan / Arahan (Opsional)</label>
+        <div className="space-y-1.5">
+          <label htmlFor="notes" className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919]">
+            Catatan Tambahan & Arahan Khusus
+          </label>
           <textarea
             id="notes"
             name="notes"
-            placeholder="Contoh: Tolong mention link afiliasi shopee di outro, gunakan bahasa anak gaul Jaksel."
+            placeholder="Contoh: Berikan hook dramatis di intro, bahas studi kasus bab 3, dan berikan CTA ajakan baca buku di outro."
             value={formData.notes}
             onChange={handleChange}
             disabled={isLoading}
-            className="w-full min-h-[120px] p-4 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm disabled:opacity-50 resize-y"
+            className="w-full min-h-[100px] p-3 rounded-lg bg-[#faf9f6] border border-[#e8e7e0] focus:border-[#191919] outline-none transition-all text-xs text-[#191919] disabled:opacity-50 resize-y"
           />
         </div>
 
-        <div className="pt-4">
+        <div className="pt-3">
           <button
             type="submit"
             disabled={isLoading || !formData.title || !formData.author}
-            className="w-full h-12 bg-primary hover:bg-surface-tint text-on-primary rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+            className="w-full h-11 bg-[#191919] hover:bg-[#333333] text-white rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-xs disabled:opacity-60"
           >
             {isLoading ? (
               <>
-                <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
-                Menyusun Naskah (10-30 detik)...
+                <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                <span>Generating Podcast Pipeline (~30-60s)...</span>
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined text-lg">mic</span>
-                Buat Naskah Podcast
+                <span className="material-symbols-outlined text-base">mic</span>
+                <span>Generate ElevenLabs-Ready Podcast Script</span>
               </>
             )}
           </button>

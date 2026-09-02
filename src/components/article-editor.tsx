@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LiveBanner } from "@/components/live-banner"
 import { GenerateWorkflowButton } from "@/components/generate-workflow-button"
+import Link from "next/link"
 
 interface ArticleAsset {
   id: string
@@ -46,6 +47,10 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
   )
   const [knowledgeTagSlug, setKnowledgeTagSlug] = useState(initialArticle?.knowledgeTagSlug || "")
   const [availableTags, setAvailableTags] = useState<any[]>([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [notification, setNotification] = useState<{ type: "success" | "error", message: string } | null>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     fetch("/api/knowledge/tags")
@@ -55,17 +60,18 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
       })
       .catch(console.error)
   }, [])
-  const [isSaving, setIsSaving] = useState(false)
-  const [isUploadingImage, setIsUploadingImage] = useState(false)
-  const [isRegeneratingBanner, setIsRegeneratingBanner] = useState(false)
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+  const showNotification = (type: "success" | "error", message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 4000)
+  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran gambar terlalu besar! Maksimal 2MB.");
+      showNotification("error", "Ukuran gambar terlalu besar! Maksimal 2MB.")
       return;
     }
 
@@ -75,15 +81,15 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
       const base64Str = event.target?.result as string;
       setImageUrl(base64Str);
       setIsUploadingImage(false);
+      showNotification("success", "Cover gambar berhasil dimuat!")
     };
     reader.onerror = () => {
-      alert("Gagal membaca file gambar.");
+      showNotification("error", "Gagal membaca file gambar.")
       setIsUploadingImage(false);
     };
     reader.readAsDataURL(file);
   };
 
-  // Simple auto-expand for textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>, setter: (val: string) => void) => {
     setter(e.target.value)
     e.target.style.height = 'auto'
@@ -120,17 +126,20 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
         })
       }
 
-      if (!res.ok) throw new Error("Gagal menyimpan artikel")
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Gagal menyimpan artikel")
+      }
       
       const savedArticle = await res.json()
       if (!isEditMode) {
         router.push(`/dashboard/article/${savedArticle.id}`)
       } else {
+        showNotification("success", publish ? "Artikel ditandai Siap Publikasi (READY)!" : "Draft berhasil disimpan.")
         router.refresh()
-        alert("Berhasil disimpan!")
       }
-    } catch (error) {
-      alert(error)
+    } catch (error: any) {
+      showNotification("error", error.message || "Terjadi kesalahan saat menyimpan.")
     } finally {
       setIsSaving(false)
     }
@@ -138,7 +147,7 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
 
   const handlePublishToMedium = async () => {
     if (!initialArticle?.id) {
-      alert("Simpan artikel terlebih dahulu!");
+      showNotification("error", "Simpan artikel terlebih dahulu!");
       return;
     }
     setIsSaving(true);
@@ -150,37 +159,70 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal publish ke Medium");
-      alert("Berhasil dipublish ke Medium sebagai Draft!\n" + data.url);
+      showNotification("success", "Berhasil dipublish ke Medium sebagai Draft!");
       router.refresh();
     } catch (e: any) {
-      alert(e.message);
+      showNotification("error", e.message || "Gagal publish ke Medium.");
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative bg-surface">
-      {/* Writing Environment */}
-      <div className="flex-1 overflow-y-auto px-6 md:px-12 py-12 flex justify-center relative">
-        <div className="w-full max-w-[720px] flex flex-col gap-8">
+    <div className="flex-1 flex flex-col xl:flex-row overflow-hidden relative bg-[#faf9f6]">
+      {/* Toast Notification */}
+      {notification && (
+        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg border text-xs font-semibold flex items-center gap-2 transition-all ${
+          notification.type === "success" 
+            ? "bg-[#191919] text-white border-[#191919]" 
+            : "bg-[#ba1a1a] text-white border-[#ba1a1a]"
+        }`}>
+          <span className="material-symbols-outlined text-[16px]">
+            {notification.type === "success" ? "check_circle" : "error"}
+          </span>
+          <span>{notification.message}</span>
+        </div>
+      )}
+
+      {/* Main Editorial Canvas (Medium-like Reading & Writing Area) */}
+      <div className="flex-1 overflow-y-auto px-6 md:px-16 py-10 flex justify-center custom-scrollbar">
+        <div className="w-full max-w-[740px] flex flex-col gap-6">
           
-          {/* Status Indicator */}
-          <div className="flex items-center gap-3 text-secondary text-sm font-medium">
-            <span className="material-symbols-outlined text-[16px]">
-              {initialArticle?.contentType === 'PODCAST' ? 'mic' : 'edit_document'}
-            </span>
-            <span>{initialArticle?.status || "DRAFT"}</span>
-            <span className="w-1 h-1 rounded-full bg-outline-variant"></span>
-            <span className="uppercase tracking-wider text-xs bg-surface-container-high px-2 py-0.5 rounded">
-              {initialArticle?.contentType || "ARTICLE"}
-            </span>
+          {/* Top Breadcrumb & Status */}
+          <div className="flex items-center justify-between border-b border-[#e8e7e0] pb-4">
+            <div className="flex items-center gap-2.5 text-xs text-[#777777] font-mono">
+              <Link href="/dashboard/articles" className="hover:text-[#191919] flex items-center gap-1">
+                <span className="material-symbols-outlined text-[15px]">arrow_back</span>
+                Stories
+              </Link>
+              <span>/</span>
+              <span className="uppercase font-bold text-[#191919]">
+                {initialArticle?.contentType || "ARTICLE"}
+              </span>
+              <span>/</span>
+              <span className={`px-2 py-0.5 rounded font-bold ${
+                initialArticle?.status === 'PUBLISHED' ? 'bg-[#1a8917]/10 text-[#1a8917]' :
+                initialArticle?.status === 'READY' ? 'bg-[#191919] text-white' : 'bg-[#edece7] text-[#666666]'
+              }`}>
+                {initialArticle?.status || "DRAFT"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSave(false)}
+                disabled={isSaving}
+                className="text-xs font-semibold px-3 py-1.5 rounded border border-[#d1d0c9] hover:bg-[#191919] hover:text-white transition-colors disabled:opacity-50"
+              >
+                {isSaving ? "Saving..." : "Save Draft"}
+              </button>
+            </div>
           </div>
 
-          {/* Title Input */}
-          <div className="relative group">
+          {/* Title Area */}
+          <div className="pt-2">
             <textarea
-              className="w-full bg-transparent border-none p-0 focus:ring-0 text-3xl md:text-4xl font-semibold text-on-surface placeholder-outline-variant outline-none transition-colors resize-none overflow-hidden"
+              className="w-full bg-transparent border-none p-0 focus:ring-0 text-3xl md:text-5xl font-bold text-[#191919] placeholder-[#bbbbbb] outline-none resize-none tracking-tight leading-[1.15] font-sans"
               placeholder="Title..."
               value={title}
               onChange={(e) => handleTextareaChange(e, setTitle)}
@@ -188,35 +230,37 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
             />
           </div>
 
-          {/* Meta Information Block */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 pb-8 border-b border-surface-variant">
-            <div className="flex-1 group relative">
-              <label className="block text-xs font-semibold text-secondary mb-1">Author</label>
+          {/* Byline / Metadata Strip */}
+          <div className="flex flex-wrap items-center gap-4 py-3 border-y border-[#e8e7e0] text-xs text-[#666666]">
+            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+              <span className="font-semibold text-[#888888] uppercase tracking-wider text-[10px]">Author:</span>
               <input
-                className="w-full bg-transparent border-b border-transparent hover:border-outline-variant focus:border-primary px-0 py-1 text-sm text-on-surface focus:ring-0 transition-colors placeholder-outline-variant outline-none"
+                className="bg-transparent border-b border-transparent hover:border-[#cccccc] focus:border-[#191919] px-1 py-0.5 text-xs text-[#191919] font-medium outline-none flex-1"
                 type="text"
                 value={author}
                 onChange={e => setAuthor(e.target.value)}
                 placeholder="Author Name"
               />
             </div>
-            <div className="flex-1 group relative">
-              <label className="block text-xs font-semibold text-secondary mb-1">Knowledge Base Ref.</label>
+
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[#888888] uppercase tracking-wider text-[10px]">Knowledge Base:</span>
               <select
-                className="w-full bg-transparent border-b border-transparent hover:border-outline-variant focus:border-primary px-0 py-1 text-sm text-on-surface focus:ring-0 transition-colors outline-none cursor-pointer"
+                className="bg-transparent border-b border-transparent hover:border-[#cccccc] focus:border-[#191919] px-1 py-0.5 text-xs text-[#191919] font-medium outline-none cursor-pointer"
                 value={knowledgeTagSlug}
                 onChange={e => setKnowledgeTagSlug(e.target.value)}
               >
-                <option value="">-- Tidak ada --</option>
+                <option value="">None</option>
                 {availableTags.map(t => (
                   <option key={t.slug} value={t.slug}>{t.title}</option>
                 ))}
               </select>
             </div>
-            <div className="flex-1 group relative hidden md:block">
-              <label className="block text-xs font-semibold text-secondary mb-1">Publication Date</label>
+
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[#888888] uppercase tracking-wider text-[10px]">Schedule:</span>
               <input
-                className="w-full bg-transparent border-b border-transparent hover:border-outline-variant focus:border-primary px-0 py-1 text-sm text-on-surface focus:ring-0 transition-colors outline-none"
+                className="bg-transparent border-b border-transparent hover:border-[#cccccc] focus:border-[#191919] px-1 py-0.5 text-xs text-[#191919] font-mono outline-none"
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={e => setScheduledAt(e.target.value)}
@@ -224,28 +268,33 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
             </div>
           </div>
 
-          {/* Main Body Editor */}
-          <div className="relative min-h-[400px]">
+          {/* Body Markdown Content (Distraction-Free) */}
+          <div className="py-4">
             <textarea
-              className="w-full h-full min-h-[400px] bg-transparent border-none p-0 focus:ring-0 text-base text-on-surface leading-relaxed placeholder-outline-variant outline-none resize-none"
-              placeholder="Start writing here..."
+              className="w-full min-h-[500px] bg-transparent border-none p-0 focus:ring-0 font-editorial-serif text-lg md:text-xl text-[#242424] leading-[1.8] placeholder-[#bbbbbb] outline-none resize-none"
+              placeholder="Tell your story or enter prompt in notes below to generate..."
               value={markdownContent}
               onChange={(e) => handleTextareaChange(e, setMarkdownContent)}
             />
           </div>
 
-          {/* Additional Notes Area */}
-          <div className="mt-12 p-6 bg-surface-container-lowest rounded-xl border border-surface-variant">
-            <label className="flex items-center gap-2 text-sm font-semibold text-on-surface mb-3">
-              <span className="material-symbols-outlined text-[18px]">speaker_notes</span>
-              Editorial Notes / AI Prompts
-            </label>
+          {/* AI Workflow Trigger & Notes Box */}
+          <div className="mt-8 p-6 bg-white rounded-xl border border-[#e8e7e0] shadow-xs">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs font-mono font-bold text-[#191919] uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] text-[#c8102e]">psychology</span>
+                Editorial Instructions & AI Prompts
+              </label>
+              <span className="text-[11px] text-[#888888]">5-Agent Pipeline</span>
+            </div>
+            
             <textarea
-              className="w-full bg-surface border border-outline-variant rounded-lg p-4 text-sm text-on-surface-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all min-h-[100px] resize-y"
-              placeholder="Add internal notes or instructions for AI Generator..."
+              className="w-full bg-[#faf9f6] border border-[#e8e7e0] rounded-lg p-3 text-xs text-[#191919] focus:border-[#191919] outline-none transition-all min-h-[80px] resize-y font-sans"
+              placeholder="Masukkan poin khusus, fokus bab, atau pesan utama untuk diproses AI Writer..."
               value={notes}
               onChange={e => setNotes(e.target.value)}
             />
+
             {initialArticle ? (
               <div className="mt-4 flex justify-end">
                 <GenerateWorkflowButton articleId={initialArticle.id} status={initialArticle.status} />
@@ -254,10 +303,9 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
               <div className="mt-4 flex justify-end">
                 <button
                   onClick={async () => {
-                    if (!title) return alert("Mohon isi judul terlebih dahulu!");
+                    if (!title) return showNotification("error", "Mohon isi judul terlebih dahulu!");
                     setIsSaving(true);
                     try {
-                      // 1. Simpan draf dulu
                       const payload = { title, author, notes, imageUrl, knowledgeTagSlug: knowledgeTagSlug || null, contentType: 'ARTICLE', status: 'IDEATION' };
                       const res = await fetch(`/api/articles`, {
                         method: "POST",
@@ -267,26 +315,20 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
                       if (!res.ok) throw new Error("Gagal menyimpan draf");
                       const savedArticle = await res.json();
                       
-                      // 2. Jalankan AI Generator
                       const aiRes = await fetch(`/api/articles/${savedArticle.id}/generate`, { method: "POST" });
                       if (!aiRes.ok) throw new Error("Gagal menjalankan AI");
                       
-                      // 3. Redirect ke halaman detail
                       router.push(`/dashboard/article/${savedArticle.id}`);
-                    } catch (error) {
-                      alert(error);
+                    } catch (error: any) {
+                      showNotification("error", error.message || "Gagal menjalankan workflow AI");
                       setIsSaving(false);
                     }
                   }}
                   disabled={isSaving || !title}
-                  className="bg-primary text-on-primary px-4 py-2 rounded text-sm font-semibold hover:bg-primary-container disabled:opacity-50 flex items-center gap-2"
+                  className="bg-[#191919] hover:bg-[#333333] text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
                 >
-                  {isSaving ? (
-                    <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                  ) : (
-                    <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-                  )}
-                  {isSaving ? "AI sedang bekerja (Bisa butuh 30-60 detik)..." : "Generate Content with AI"}
+                  <span className="material-symbols-outlined text-[15px]">auto_awesome</span>
+                  {isSaving ? "AI Processing (~30-60s)..." : "Generate Story with AI"}
                 </button>
               </div>
             )}
@@ -294,145 +336,133 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
         </div>
       </div>
 
-      {/* Media & Assets Sidebar (Right) */}
-      <aside className="w-full md:w-80 lg:w-[400px] bg-surface-container-lowest border-l border-outline-variant flex flex-col h-full overflow-y-auto">
-        <div className="p-6 flex flex-col gap-8">
-          
-          <div className="flex justify-between items-center">
-            <h3 className="text-xs font-bold text-on-surface uppercase tracking-wider">Asset Management</h3>
+      {/* Right Studio Sidebar (Media & Publishing) */}
+      <aside className="w-full xl:w-[380px] bg-white border-t xl:border-t-0 xl:border-l border-[#e8e7e0] flex flex-col h-auto xl:h-full overflow-y-auto custom-scrollbar">
+        <div className="p-6 flex flex-col gap-6">
+          <div className="flex items-center justify-between border-b border-[#e8e7e0] pb-3">
+            <h3 className="text-xs font-mono font-bold text-[#191919] uppercase tracking-wider">
+              Publishing & Assets
+            </h3>
+            {initialArticle?.monetizationValue ? (
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#f0eee6] text-[#191919]">
+                Score: {initialArticle.monetizationValue}/100
+              </span>
+            ) : null}
           </div>
 
-          {/* Podcast Version Generation */}
+          {/* Podcast Script Version Card */}
           {initialArticle && initialArticle.contentType !== 'PODCAST' && initialArticle.markdownContent && (
-            <section className="flex flex-col gap-3 p-4 bg-primary/5 rounded-xl border border-primary/20">
-              <label className="text-xs font-semibold text-primary flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px]">mic</span>
-                Podcast Version
-              </label>
-              <p className="text-xs text-on-surface-variant">
-                Generate an audio script version of this article using AI.
+            <div className="p-4 bg-[#faf9f6] rounded-xl border border-[#e8e7e0] flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#191919] flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px] text-[#c8102e]">mic</span>
+                  Podcast Audio Script
+                </span>
+                <span className="text-[9px] font-mono uppercase bg-[#e8e7e0] px-1.5 py-0.5 rounded font-bold text-[#555555]">
+                  ElevenLabs Ready
+                </span>
+              </div>
+              <p className="text-xs text-[#666666] leading-relaxed">
+                Ubah naskah ulasan buku ini menjadi format audio podcast storytelling dengan jeda SSML.
               </p>
               <button 
                 onClick={() => router.push(`/dashboard/podcast?articleId=${initialArticle.id}`)}
-                className="mt-1 w-full bg-primary text-on-primary text-xs font-semibold py-2 rounded hover:bg-primary-container transition-colors flex justify-center items-center gap-1"
+                className="mt-1 w-full bg-[#191919] text-white text-xs font-semibold py-2 rounded-lg hover:bg-[#333333] transition-colors flex justify-center items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[16px]">smart_toy</span>
-                Write Podcast Script
+                <span className="material-symbols-outlined text-[14px]">smart_toy</span>
+                Generate Podcast Script
               </button>
-            </section>
+            </div>
           )}
 
-          {/* Banner Medium — Live Template (no AI cost) */}
-          <section className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-secondary flex justify-between items-center">
-              Medium Banner (16:9)
-              <span className="text-[10px] bg-surface-variant px-2 py-0.5 rounded text-on-surface-variant font-bold">Live Preview</span>
+          {/* Live Banner Medium (16:9) */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between text-xs font-bold text-[#191919]">
+              <span>Medium Banner (16:9)</span>
+              <span className="text-[10px] font-mono font-medium text-[#777777]">Live Preview</span>
+            </div>
+            <div className="border border-[#e8e7e0] rounded-lg overflow-hidden bg-[#f0eee6]">
+              <LiveBanner title={title} author={author} imageUrl={imageUrl || undefined} format="MEDIUM" />
+            </div>
+          </div>
+
+          {/* Live Banner Instagram (1:1) */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between text-xs font-bold text-[#191919]">
+              <span>Instagram Post (1:1)</span>
+              <span className="text-[10px] font-mono font-medium text-[#777777]">Live Preview</span>
+            </div>
+            <div className="border border-[#e8e7e0] rounded-lg overflow-hidden bg-[#f0eee6]">
+              <LiveBanner title={title} author={author} imageUrl={imageUrl || undefined} format="INSTAGRAM" />
+            </div>
+          </div>
+
+          {/* Cover & Affiliate Links */}
+          <div className="flex flex-col gap-3 pt-2 border-t border-[#e8e7e0]">
+            <label className="text-xs font-mono font-bold text-[#191919] uppercase tracking-wider">
+              Cover & Affiliate Link
             </label>
-            <LiveBanner title={title} author={author} imageUrl={imageUrl || undefined} format="MEDIUM" />
-          </section>
 
-          {/* Banner Instagram — Live Template (no AI cost) */}
-          <section className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-secondary flex justify-between items-center">
-              Instagram Post (1:1)
-              <span className="text-[10px] bg-surface-variant px-2 py-0.5 rounded text-on-surface-variant font-bold">Live Preview</span>
-            </label>
-            <LiveBanner title={title} author={author} imageUrl={imageUrl || undefined} format="INSTAGRAM" />
-          </section>
-
-          <hr className="border-outline-variant" />
-
-          {/* Affiliate Links Section */}
-          <section className="flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-semibold text-secondary">Associated Links</label>
-            </div>
-            
-            <div className="bg-surface p-3 rounded-lg border border-outline-variant flex gap-3 items-start group">
-              <div className="mt-1 text-secondary">
-                <span className="material-symbols-outlined text-[20px]">link</span>
-              </div>
-              <div className="flex-1 flex flex-col gap-1">
-                <input
-                  className="bg-transparent border-none p-0 h-6 text-sm font-medium text-on-surface focus:ring-0 outline-none w-full"
-                  placeholder="Link Title (e.g. Tokopedia)"
-                  type="text"
-                  value="Affiliate Link"
-                  readOnly
-                />
-                <input
-                  className="bg-transparent border-none p-0 h-5 text-xs text-secondary focus:ring-0 outline-none w-full"
-                  placeholder="https://..."
-                  type="text"
-                  value={affiliateLink}
-                  onChange={e => setAffiliateLink(e.target.value)}
+            {/* Book Cover Image Input */}
+            <div className="p-3 bg-[#faf9f6] rounded-lg border border-[#e8e7e0] flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-[#191919] flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[15px]">image</span>
+                  Book Cover Image
+                </span>
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingImage}
+                  className="text-xs font-semibold text-[#1a8917] hover:underline flex items-center gap-0.5 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-[13px]">upload</span>
+                  Upload
+                </button>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  onChange={handleImageUpload}
                 />
               </div>
+              <input
+                className="bg-white border border-[#e8e7e0] rounded px-2.5 py-1.5 text-xs text-[#191919] placeholder-[#999999] outline-none focus:border-[#191919]"
+                placeholder="Atau paste URL gambar..."
+                type="text"
+                value={imageUrl}
+                onChange={e => setImageUrl(e.target.value)}
+              />
             </div>
-            
-            <div className="bg-surface p-3 rounded-lg border border-outline-variant flex gap-3 items-start group relative">
-              <div className="mt-1 text-secondary">
-                {isUploadingImage ? (
-                  <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-                ) : (
-                  <span className="material-symbols-outlined text-[20px]">image</span>
-                )}
-              </div>
-              <div className="flex-1 flex flex-col gap-1">
-                <div className="flex justify-between items-center w-full">
-                  <input
-                    className="bg-transparent border-none p-0 h-6 text-sm font-medium text-on-surface focus:ring-0 outline-none flex-1"
-                    placeholder="Cover Image URL"
-                    type="text"
-                    value="Book Cover Image"
-                    readOnly
-                  />
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingImage}
-                    className="text-xs text-primary hover:bg-primary/10 px-2 py-1 rounded transition-colors flex items-center gap-1 font-medium disabled:opacity-50"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">upload</span>
-                    Upload
-                  </button>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    onChange={handleImageUpload}
-                  />
-                </div>
-                <input
-                  className="bg-transparent border-none p-0 h-5 text-xs text-secondary focus:ring-0 outline-none w-full"
-                  placeholder="Atau paste link URL gambar (https://...)"
-                  type="text"
-                  value={imageUrl}
-                  onChange={e => setImageUrl(e.target.value)}
-                />
-              </div>
+
+            {/* Affiliate Link Input */}
+            <div className="p-3 bg-[#faf9f6] rounded-lg border border-[#e8e7e0] flex flex-col gap-2">
+              <span className="text-xs font-semibold text-[#191919] flex items-center gap-1">
+                <span className="material-symbols-outlined text-[15px]">link</span>
+                Affiliate Purchase Link
+              </span>
+              <input
+                className="bg-white border border-[#e8e7e0] rounded px-2.5 py-1.5 text-xs text-[#191919] placeholder-[#999999] outline-none focus:border-[#191919]"
+                placeholder="https://gramedia.com/... atau tokopedia.com/..."
+                type="text"
+                value={affiliateLink}
+                onChange={e => setAffiliateLink(e.target.value)}
+              />
             </div>
-          </section>
-
-          {/* Evaluator Output */}
-          {initialArticle?.monetizationValue !== undefined && initialArticle.monetizationValue !== null && initialArticle.monetizationValue > 0 && (
-            <section className="flex flex-col gap-2 p-4 bg-tertiary/10 rounded-xl border border-tertiary/20">
-              <label className="text-xs font-semibold text-tertiary flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px]">monetization_on</span>
-                AI Evaluator Score
-              </label>
-              <div className="text-xl font-bold text-tertiary">{initialArticle.monetizationValue}/100</div>
-            </section>
-          )}
-
+          </div>
         </div>
 
-        {/* Footer Publish Actions */}
-        <div className="mt-auto p-6 bg-surface-container-low border-t border-outline-variant flex flex-col gap-3">
+        {/* Publish Action Footer */}
+        <div className="mt-auto p-6 bg-[#faf9f6] border-t border-[#e8e7e0] flex flex-col gap-2.5">
           {initialArticle?.mediumUrl && (
-            <a href={initialArticle.mediumUrl} target="_blank" rel="noopener noreferrer" className="w-full bg-[#1c1c1c] text-white text-sm font-semibold py-3 rounded-lg hover:bg-black transition-colors flex justify-center items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-              Buka di Medium
+            <a 
+              href={initialArticle.mediumUrl} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-full bg-[#191919] text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-[#333333] transition-colors flex justify-center items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+              View Live on Medium
             </a>
           )}
           
@@ -440,54 +470,42 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
             <button
               onClick={handlePublishToMedium}
               disabled={isSaving}
-              className="w-full bg-[#1c1c1c] text-white text-sm font-semibold py-3 rounded-lg hover:bg-black transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
+              className="w-full bg-[#191919] text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-[#333333] transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
             >
-              <span className="material-symbols-outlined text-[18px]">post_add</span>
-              Publish ke Medium
+              <span className="material-symbols-outlined text-[16px]">post_add</span>
+              Publish Draft to Medium
             </button>
           )}
 
           <button
             onClick={() => handleSave(true)}
             disabled={isSaving}
-            className="w-full bg-primary text-on-primary text-sm font-semibold py-3 rounded-lg hover:bg-primary-container transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
+            className="w-full bg-[#1a8917] hover:bg-[#156d12] text-white text-xs font-semibold py-2.5 rounded-lg transition-colors flex justify-center items-center gap-1.5 shadow-xs disabled:opacity-50"
           >
-            {isSaving ? (
-              <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-            ) : (
-              <span className="material-symbols-outlined text-[18px]">publish</span>
-            )}
-            Mark as Ready / Publish
-          </button>
-          <button
-            onClick={() => handleSave(false)}
-            disabled={isSaving}
-            className="w-full bg-transparent border border-outline text-on-surface text-sm font-semibold py-3 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-50"
-          >
-            Save as Draft
+            <span className="material-symbols-outlined text-[16px]">check_circle</span>
+            Mark as Ready / Scheduled
           </button>
 
           {isEditMode && (
             <button
               onClick={async () => {
                 if (!initialArticle?.id) return;
-                if (!window.confirm("Apakah Anda yakin ingin menghapus konten ini? Tindakan ini tidak dapat dibatalkan.")) return;
+                if (!window.confirm("Hapus artikel ini secara permanen?")) return;
                 setIsSaving(true);
                 try {
                   const res = await fetch(`/api/articles/${initialArticle.id}`, { method: "DELETE" });
                   if (!res.ok) throw new Error("Gagal menghapus konten");
-                  alert("Konten berhasil dihapus!");
-                  router.push("/dashboard");
+                  router.push("/dashboard/articles");
                 } catch (e: any) {
-                  alert(e.message);
+                  showNotification("error", e.message);
                   setIsSaving(false);
                 }
               }}
               disabled={isSaving}
-              className="w-full mt-2 bg-transparent text-red-500 text-sm font-semibold py-2 rounded-lg hover:bg-red-500/10 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full text-xs text-[#ba1a1a] hover:bg-[#ffdad6]/40 py-2 rounded-lg transition-colors flex items-center justify-center gap-1 mt-1 font-medium disabled:opacity-50"
             >
-              <span className="material-symbols-outlined text-[18px]">delete</span>
-              Delete
+              <span className="material-symbols-outlined text-[14px]">delete</span>
+              Delete Story
             </button>
           )}
         </div>

@@ -12,62 +12,88 @@ export default async function AnalyticsPage() {
     : 0;
 
   return (
-    <div className="flex-1 p-5 md:p-10 max-w-[1400px] mx-auto w-full">
-      <div className="mb-8">
-        <h2 className="text-3xl font-semibold text-on-surface m-0 tracking-tight">Analytics</h2>
-        <p className="text-sm text-secondary mt-1">Evaluasi performa konversi afiliasi konten Anda yang dianalisis oleh AI.</p>
+    <div className="flex-1 p-6 md:p-10 max-w-[1200px] mx-auto w-full">
+      {/* Editorial Header */}
+      <div className="mb-8 border-b border-[#e8e7e0] pb-6">
+        <div className="flex items-center gap-2 text-[11px] font-mono font-bold tracking-wider text-[#777777] uppercase mb-1">
+          <span>INTELLIGENCE & REVENUE</span>
+          <span>/</span>
+          <span className="text-[#c8102e]">MONETIZATION</span>
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-[#191919] tracking-tight font-sans">
+          Monetization Analytics
+        </h1>
+        <p className="text-xs text-[#666666] mt-1 font-editorial-serif">
+          Skor konversi afiliasi dan rekomendasi Call-to-Action yang dievaluasi otomatis oleh AI Evaluator Agent.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-2xl">monetization_on</span>
+      {/* Swiss Metric Scorecards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+        <div className="bg-white p-6 rounded-xl border border-[#e8e7e0] shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[#777777]">
+            <span className="text-[11px] font-mono font-bold tracking-wider uppercase">Average Score</span>
+            <span className="material-symbols-outlined text-[18px]">analytics</span>
           </div>
-          <div>
-            <p className="text-sm font-medium text-secondary">Rata-rata Skor Afiliasi</p>
-            <p className="text-3xl font-semibold text-on-surface tracking-tight mt-1">
-              {Math.round(avgScore)}<span className="text-lg text-secondary font-medium">/100</span>
+          <div className="mt-4">
+            <span className="text-4xl md:text-5xl font-black text-[#191919] tracking-tight font-sans">
+              {Math.round(avgScore)}
+            </span>
+            <span className="text-sm font-mono text-[#888888]">/100</span>
+            <p className="text-xs text-[#888888] mt-1">Average conversion potential</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-[#e8e7e0] shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[#777777]">
+            <span className="text-[11px] font-mono font-bold tracking-wider uppercase">Evaluated Stories</span>
+            <span className="material-symbols-outlined text-[18px]">verified</span>
+          </div>
+          <div className="mt-4">
+            <span className="text-4xl md:text-5xl font-black text-[#1a8917] tracking-tight font-sans">
+              {articles.length}
+            </span>
+            <p className="text-xs text-[#888888] mt-1">Articles analyzed by Evaluator</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-[#e8e7e0] shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[#777777]">
+            <span className="text-[11px] font-mono font-bold tracking-wider uppercase">Top Opportunity</span>
+            <span className="material-symbols-outlined text-[18px] text-[#c8102e]">trending_up</span>
+          </div>
+          <div className="mt-4 min-w-0">
+            <p className="text-base font-bold text-[#191919] truncate leading-tight">
+              {articles[0]?.title || "-"}
+            </p>
+            <p className="text-xs text-[#888888] mt-1 font-mono">
+              {articles[0]?.monetizationValue ? `Score: ${articles[0].monetizationValue}/100` : "No articles yet"}
             </p>
           </div>
         </div>
-        <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-tertiary/10 text-tertiary flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-2xl">analytics</span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-secondary">Artikel Dievaluasi</p>
-            <p className="text-3xl font-semibold text-on-surface tracking-tight mt-1">{articles.length}</p>
-          </div>
-        </div>
-        <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[#1c1c1c]/10 text-[#1c1c1c] flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-2xl">trending_up</span>
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-secondary">Artikel Paling Potensial</p>
-            <p className="text-lg font-semibold text-on-surface mt-1 truncate">{articles[0]?.title || "-"}</p>
-          </div>
-        </div>
       </div>
 
-      <div className="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden">
-        <div className="px-6 py-4 border-b border-outline-variant">
-          <h3 className="text-lg font-semibold text-on-surface">Detail Evaluasi AI</h3>
+      {/* Evaluation Table */}
+      <div className="bg-white rounded-xl border border-[#e8e7e0] overflow-hidden shadow-xs">
+        <div className="px-6 py-4 border-b border-[#e8e7e0] bg-[#faf9f6]">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-[#191919]">
+            AI Feedback & Conversion Audit
+          </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-surface-container-low border-b border-outline-variant">
-                <th className="px-6 py-3 text-xs font-semibold text-secondary uppercase tracking-wider">Judul Buku</th>
-                <th className="px-6 py-3 text-xs font-semibold text-secondary uppercase tracking-wider">Skor Afiliasi</th>
-                <th className="px-6 py-3 text-xs font-semibold text-secondary uppercase tracking-wider">Saran AI</th>
+              <tr className="border-b border-[#e8e7e0] text-[#777777] font-mono font-bold uppercase">
+                <th className="px-6 py-3">Story Title</th>
+                <th className="px-6 py-3">Score</th>
+                <th className="px-6 py-3">AI Evaluator Suggestion</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-outline-variant">
+            <tbody className="divide-y divide-[#f0eee6]">
               {articles.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-sm text-secondary">
-                    Belum ada artikel yang dievaluasi. Generate artikel terlebih dahulu.
+                  <td colSpan={3} className="px-6 py-12 text-center text-xs text-[#888888] italic">
+                    Belum ada artikel yang dievaluasi. Jalankan AI Workflow pada artikel untuk mendapatkan audit skor.
                   </td>
                 </tr>
               ) : articles.map((article) => {
@@ -75,21 +101,22 @@ export default async function AnalyticsPage() {
                   ? article.notes.split('[AI Evaluator Suggestion]:')[1] 
                   : '-';
                 return (
-                  <tr key={article.id} className="hover:bg-surface-container-lowest/50 transition-colors">
-                    <td className="px-6 py-4 max-w-[250px]">
-                      <Link href={`/dashboard/article/${article.id}`} className="text-sm font-semibold text-primary hover:underline line-clamp-2">
+                  <tr key={article.id} className="hover:bg-[#faf9f6] transition-colors">
+                    <td className="px-6 py-4 max-w-[280px]">
+                      <Link href={`/dashboard/article/${article.id}`} className="font-bold text-[#191919] hover:text-[#1a8917] transition-colors line-clamp-2">
                         {article.title}
                       </Link>
+                      <span className="text-[10px] text-[#888888] mt-0.5 block">{article.author || "No author"}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2.5 py-1 text-xs font-bold rounded-md ${
-                        (article.monetizationValue || 0) >= 80 ? 'bg-primary/10 text-primary' :
-                        (article.monetizationValue || 0) >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      <span className={`inline-flex px-2.5 py-1 text-xs font-mono font-bold rounded ${
+                        (article.monetizationValue || 0) >= 80 ? 'bg-[#1a8917]/10 text-[#1a8917]' :
+                        (article.monetizationValue || 0) >= 60 ? 'bg-[#191919] text-white' : 'bg-[#ffdad6] text-[#ba1a1a]'
                       }`}>
                         {article.monetizationValue}/100
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-on-surface-variant max-w-md truncate">
+                    <td className="px-6 py-4 text-[#555555] font-editorial-serif leading-relaxed max-w-lg">
                       {suggestion}
                     </td>
                   </tr>

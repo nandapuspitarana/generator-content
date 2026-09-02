@@ -2,109 +2,138 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: var(--font-montserrat);
-  
-  --font-display-lg: var(--font-montserrat);
-  --font-headline-md: var(--font-montserrat);
-  --font-body-md: var(--font-montserrat);
-  --font-label-md: var(--font-montserrat);
-  --font-caption: var(--font-montserrat);
-  --font-headline-sm: var(--font-montserrat);
-  --font-display-lg-mobile: var(--font-montserrat);
-  --font-body-lg: var(--font-montserrat);
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-newsreader), "Charter", Georgia, Cambria, serif;
+  --font-mono: var(--font-mono), "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 
-  --color-primary: #004c3a;
-  --color-on-primary-fixed: #002117;
-  --color-on-secondary-fixed-variant: #474746;
-  --color-error: #ba1a1a;
-  --color-surface: #f9f9f9;
-  --color-surface-tint: #0c6b54;
-  --color-on-secondary-container: #656464;
+  /* Swiss Editorial & Medium-inspired Palette */
+  --color-surface: #faf9f6;
   --color-surface-container-lowest: #ffffff;
-  --color-on-background: #1a1c1c;
-  --color-surface-bright: #f9f9f9;
-  --color-on-tertiary-fixed-variant: #743329;
-  --color-secondary-fixed: #e4e2e1;
-  --color-primary-fixed-dim: #85d6b9;
-  --color-surface-container-low: #f3f3f3;
-  --color-inverse-on-surface: #f1f1f1;
-  --color-outline: #6f7974;
-  --color-on-error: #ffffff;
-  --color-tertiary: #6e2e25;
-  --color-inverse-primary: #85d6b9;
-  --color-secondary-fixed-dim: #c8c6c5;
-  --color-primary-container: #00664f;
-  --color-surface-container-high: #e8e8e8;
-  --color-surface-container: #eeeeee;
-  --color-secondary: #5f5e5e;
-  --color-on-surface-variant: #3f4944;
-  --color-on-tertiary-container: #ffc2b8;
-  --color-tertiary-fixed-dim: #ffb4a8;
-  --color-on-primary-container: #90e1c4;
+  --color-surface-container-low: #f4f3ef;
+  --color-surface-container: #edece7;
+  --color-surface-container-high: #e5e4de;
+  --color-surface-container-highest: #dcdaD3;
+  
+  --color-on-surface: #191919;
+  --color-on-surface-variant: #4a4a4a;
+  --color-secondary: #6e6e6e;
+  --color-secondary-container: #e8e7e1;
+  
+  --color-primary: #191919;
   --color-on-primary: #ffffff;
-  --color-on-tertiary-fixed: #3b0804;
-  --color-on-secondary: #ffffff;
-  --color-background: #f9f9f9;
-  --color-secondary-container: #e4e2e1;
-  --color-primary-fixed: #a1f3d5;
-  --color-surface-dim: #dadada;
-  --color-surface-container-highest: #e2e2e2;
-  --color-on-primary-fixed-variant: #00513e;
-  --color-outline-variant: #bec9c3;
-  --color-tertiary-fixed: #ffdad4;
-  --color-tertiary-container: #8b453a;
-  --color-on-surface: #1a1c1c;
-  --color-surface-variant: #e2e2e2;
-  --color-on-secondary-fixed: #1b1c1c;
-  --color-on-error-container: #93000a;
+  --color-primary-container: #242424;
+  --color-on-primary-container: #ffffff;
+  
+  --color-accent-red: #c8102e;
+  --color-accent-green: #1a8917;
+  --color-accent-green-hover: #156d12;
+  
+  --color-outline: #d1d0c9;
+  --color-outline-variant: #e6e5df;
+  --color-hairline: #eae9e3;
+
+  --color-error: #ba1a1a;
   --color-error-container: #ffdad6;
-  --color-on-tertiary: #ffffff;
-  --color-inverse-surface: #2f3131;
-
-  --spacing-container-max: 1200px;
-  --spacing-article-max: 720px;
-  --spacing-margin-mobile: 20px;
-  --spacing-margin-desktop: 40px;
-  --spacing-gutter: 24px;
-  --spacing-unit: 8px;
-
-  --radius-DEFAULT: 0.125rem;
-  --radius-lg: 0.25rem;
-  --radius-xl: 0.5rem;
-  --radius-full: 0.75rem;
+  
+  --spacing-container-max: 1280px;
+  --spacing-article-max: 740px;
 }
 
 body {
-  font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Material Symbols Outlined Styles */
+/* Material Symbols Outlined */
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 22;
+  vertical-align: middle;
 }
 
 .material-symbols-outlined.fill {
   font-variation-settings: 'FILL' 1;
 }
 
-/* Fix calendar specific styling */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background-color: var(--color-surface-variant);
-  border: 1px solid var(--color-surface-variant);
+/* Swiss Editorial typography classes */
+.font-editorial-serif {
+  font-family: var(--font-serif);
 }
 
-.calendar-cell {
-  background-color: var(--color-surface-container-lowest);
-  min-height: 120px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
+.font-editorial-sans {
+  font-family: var(--font-sans);
 }
 
-.calendar-cell.other-month {
-  background-color: var(--color-surface);
-  color: var(--color-outline);
+/* Medium-like reading typography */
+.prose-medium {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: #242424;
+  letter-spacing: -0.003em;
+}
+
+.prose-medium h1, 
+.prose-medium h2, 
+.prose-medium h3 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #191919;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose-medium h1 { font-size: 1.875rem; line-height: 1.25; }
+.prose-medium h2 { font-size: 1.5rem; line-height: 1.3; }
+.prose-medium h3 { font-size: 1.25rem; line-height: 1.4; }
+
+.prose-medium p {
+  margin-bottom: 1.5rem;
+}
+
+.prose-medium a {
+  color: #191919;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+.prose-medium a:hover {
+  color: var(--color-accent-red);
+}
+
+.prose-medium blockquote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  border-left: 3px solid #191919;
+  padding-left: 1.25rem;
+  margin: 1.75rem 0;
+  color: #444444;
+}
+
+/* Custom Minimal Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d4d2cb;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8a69e;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

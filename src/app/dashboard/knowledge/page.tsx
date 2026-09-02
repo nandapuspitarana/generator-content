@@ -10,7 +10,7 @@ export default function KnowledgeBasePage() {
   const [showModal, setShowModal] = useState(false);
   const [newTag, setNewTag] = useState({
     title: "",
-    category: "motivasi",
+    category: "bisnis",
     type: "buku",
     writingStyle: "santai-storytelling",
     slug: ""
@@ -67,7 +67,7 @@ export default function KnowledgeBasePage() {
         fetchTags();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to create");
+        alert(err.error || "Gagal membuat Knowledge Base");
       }
     } catch (e) {
       console.error(e);
@@ -92,114 +92,145 @@ export default function KnowledgeBasePage() {
         fetchTags();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to upload");
+        alert(err.error || "Gagal mengunggah PDF");
       }
     } catch (e) {
       console.error(e);
-      alert("Error uploading PDF");
+      alert("Terjadi kesalahan saat memproses file PDF");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-6 md:p-10 max-w-[1300px] mx-auto w-full">
+      {/* Editorial Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-[#e8e7e0] pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-on-surface">Knowledge Base</h1>
-          <p className="text-secondary mt-1 text-sm">Kelola arsip konten dan generate script podcast.</p>
+          <div className="flex items-center gap-2 text-[11px] font-mono font-bold tracking-wider text-[#777777] uppercase mb-1">
+            <span>RAG & KNOWLEDGE REPOSITORY</span>
+            <span>/</span>
+            <span className="text-[#c8102e]">ARCHIVE</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-[#191919] tracking-tight font-sans">
+            Knowledge Base
+          </h1>
+          <p className="text-xs text-[#666666] mt-1 font-editorial-serif">
+            Arsip materi buku dan dokumen referensi RAG untuk penulisan artikel mendalam dan skrip podcast.
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
           <button
             onClick={() => setShowUploadModal(true)}
-            className="border border-outline bg-surface text-on-surface px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-container flex items-center gap-2"
+            className="border border-[#d1d0c9] bg-white hover:bg-[#191919] hover:text-white text-[#191919] px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs"
           >
-            <span className="material-symbols-outlined text-sm">upload_file</span> Upload PDF
+            <span className="material-symbols-outlined text-[16px]">upload_file</span>
+            Upload PDF
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="bg-primary text-on-primary px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-2"
+            className="bg-[#191919] hover:bg-[#333333] text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-xs"
           >
-            <span className="material-symbols-outlined text-sm">add</span> Buat Manual
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            New Manual Topic
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-secondary">Loading...</div>
+        <div className="text-center py-16 text-xs font-mono text-[#888888] flex items-center justify-center gap-2">
+          <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
+          <span>Loading Knowledge Base...</span>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tags.map((tag) => (
             <Link
               key={tag.id}
               href={`/dashboard/knowledge/${tag.slug}`}
-              className="bg-surface-container-low border border-outline-variant rounded-xl p-5 hover:border-primary/50 transition-colors flex flex-col h-full"
+              className="bg-white border border-[#e8e7e0] rounded-xl p-5 hover:border-[#191919] transition-all flex flex-col h-full shadow-xs group"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <span className="bg-primary-container text-on-primary-container text-xs px-2 py-1 rounded font-medium capitalize">
+              <div className="flex items-center gap-1.5 mb-3">
+                <span className="bg-[#f0eee6] text-[#191919] text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase">
                   {tag.category}
                 </span>
-                <span className="bg-secondary-container text-on-secondary-container text-xs px-2 py-1 rounded font-medium capitalize">
+                <span className="bg-[#e8e7e1] text-[#555555] text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase">
                   {tag.type}
                 </span>
               </div>
-              <h2 className="font-bold text-lg text-on-surface mb-1 line-clamp-2">{tag.title}</h2>
-              <p className="text-xs text-secondary font-mono mb-4">{tag.slug}</p>
+              <h2 className="font-bold text-base text-[#191919] mb-1 line-clamp-2 group-hover:text-[#1a8917] transition-colors leading-snug">
+                {tag.title}
+              </h2>
+              <p className="text-[11px] text-[#888888] font-mono mb-4 truncate">{tag.slug}</p>
               
-              <div className="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center text-sm">
-                <span className="text-secondary capitalize">{tag.writingStyle.replace(/-/g, ' ')}</span>
-                <span className="material-symbols-outlined text-primary text-lg">arrow_forward</span>
+              <div className="mt-auto pt-3 border-t border-[#f0eee6] flex justify-between items-center text-xs">
+                <span className="text-[#666666] capitalize font-medium">{tag.writingStyle.replace(/-/g, ' ')}</span>
+                <span className="material-symbols-outlined text-[#aaaaaa] group-hover:text-[#191919] text-base transition-colors">
+                  arrow_forward
+                </span>
               </div>
             </Link>
           ))}
+
           {tags.length === 0 && (
-            <div className="col-span-full text-center py-12 text-secondary border border-dashed border-outline-variant rounded-xl">
-              Belum ada Knowledge Base. Klik "Buat Baru" untuk mulai.
+            <div className="col-span-full text-center py-16 bg-white border border-dashed border-[#d1d0c9] rounded-xl">
+              <span className="material-symbols-outlined text-4xl text-[#aaaaaa] mb-2">menu_book</span>
+              <p className="text-sm font-bold text-[#191919]">Belum ada data Knowledge Base</p>
+              <p className="text-xs text-[#777777] mt-1">Upload PDF buku atau buat topik manual untuk memulai RAG.</p>
             </div>
           )}
         </div>
       )}
 
+      {/* Create Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-outline-variant">
-            <div className="p-6 border-b border-outline-variant flex justify-between items-center">
-              <h3 className="text-lg font-bold">Buat Knowledge Base Baru</h3>
-              <button onClick={() => setShowModal(false)} className="text-secondary hover:text-on-surface">
-                <span className="material-symbols-outlined">close</span>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-2xl border border-[#e8e7e0]">
+            <div className="p-5 border-b border-[#e8e7e0] flex justify-between items-center bg-[#faf9f6]">
+              <h3 className="text-sm font-bold text-[#191919] font-mono uppercase tracking-wider">
+                Create Knowledge Base Topic
+              </h3>
+              <button onClick={() => setShowModal(false)} className="text-[#888888] hover:text-[#191919]">
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
-            <div className="p-6 flex flex-col gap-4">
+            <div className="p-5 flex flex-col gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-on-surface">Judul Buku/Topik</label>
+                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919] mb-1">
+                  Judul Buku / Topik
+                </label>
                 <input
                   type="text"
                   value={newTag.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  className="w-full bg-surface-container border border-outline px-3 py-2 rounded-lg text-sm focus:border-primary focus:outline-none"
-                  placeholder="Misal: Zero to Survive"
+                  className="w-full bg-[#faf9f6] border border-[#e8e7e0] px-3 py-2 rounded-lg text-xs font-medium text-[#191919] focus:border-[#191919] outline-none"
+                  placeholder="Misal: The Intelligent Investor"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-on-surface">Kategori</label>
+                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919] mb-1">
+                    Kategori
+                  </label>
                   <select
                     value={newTag.category}
                     onChange={(e) => handleCategoryTypeChange('category', e.target.value)}
-                    className="w-full bg-surface-container border border-outline px-3 py-2 rounded-lg text-sm focus:border-primary focus:outline-none capitalize"
+                    className="w-full bg-[#faf9f6] border border-[#e8e7e0] px-3 py-2 rounded-lg text-xs font-medium text-[#191919] focus:border-[#191919] outline-none"
                   >
-                    <option value="motivasi">Motivasi</option>
                     <option value="bisnis">Bisnis</option>
+                    <option value="motivasi">Motivasi</option>
                     <option value="sains">Sains</option>
                     <option value="sejarah">Sejarah</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-on-surface">Tipe</label>
+                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919] mb-1">
+                    Tipe
+                  </label>
                   <select
                     value={newTag.type}
                     onChange={(e) => handleCategoryTypeChange('type', e.target.value)}
-                    className="w-full bg-surface-container border border-outline px-3 py-2 rounded-lg text-sm focus:border-primary focus:outline-none capitalize"
+                    className="w-full bg-[#faf9f6] border border-[#e8e7e0] px-3 py-2 rounded-lg text-xs font-medium text-[#191919] focus:border-[#191919] outline-none"
                   >
                     <option value="buku">Buku</option>
                     <option value="artikel">Artikel</option>
@@ -209,11 +240,13 @@ export default function KnowledgeBasePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-on-surface">Gaya Bahasa</label>
+                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919] mb-1">
+                  Gaya Bahasa Narasi
+                </label>
                 <select
                   value={newTag.writingStyle}
                   onChange={(e) => setNewTag({ ...newTag, writingStyle: e.target.value })}
-                  className="w-full bg-surface-container border border-outline px-3 py-2 rounded-lg text-sm focus:border-primary focus:outline-none"
+                  className="w-full bg-[#faf9f6] border border-[#e8e7e0] px-3 py-2 rounded-lg text-xs font-medium text-[#191919] focus:border-[#191919] outline-none"
                 >
                   <option value="santai-storytelling">Santai Storytelling</option>
                   <option value="semi-formal-edukatif">Semi-Formal Edukatif</option>
@@ -221,26 +254,28 @@ export default function KnowledgeBasePage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1 text-on-surface">Slug</label>
+                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919] mb-1">
+                  Slug Index
+                </label>
                 <input
                   type="text"
                   value={newTag.slug}
                   onChange={(e) => setNewTag({ ...newTag, slug: e.target.value })}
-                  className="w-full bg-surface-container border border-outline px-3 py-2 rounded-lg text-sm focus:border-primary focus:outline-none font-mono"
+                  className="w-full bg-[#faf9f6] border border-[#e8e7e0] px-3 py-2 rounded-lg text-xs font-mono text-[#555555] focus:border-[#191919] outline-none"
                 />
               </div>
             </div>
-            <div className="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+            <div className="p-4 border-t border-[#e8e7e0] bg-[#faf9f6] flex justify-end gap-2">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#666666] hover:bg-[#e8e7e0]"
               >
                 Batal
               </button>
               <button
                 onClick={createTag}
                 disabled={!newTag.title || !newTag.slug}
-                className="bg-primary text-on-primary px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+                className="bg-[#191919] text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#333333] disabled:opacity-50"
               >
                 Simpan
               </button>
@@ -249,18 +284,21 @@ export default function KnowledgeBasePage() {
         </div>
       )}
 
+      {/* Upload PDF Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-outline-variant">
-            <div className="p-6 border-b border-outline-variant flex justify-between items-center">
-              <h3 className="text-lg font-bold">Upload Buku PDF</h3>
-              <button onClick={() => !uploading && setShowUploadModal(false)} className="text-secondary hover:text-on-surface">
-                <span className="material-symbols-outlined">close</span>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-2xl border border-[#e8e7e0]">
+            <div className="p-5 border-b border-[#e8e7e0] flex justify-between items-center bg-[#faf9f6]">
+              <h3 className="text-sm font-bold text-[#191919] font-mono uppercase tracking-wider">
+                Upload PDF Book
+              </h3>
+              <button onClick={() => !uploading && setShowUploadModal(false)} className="text-[#888888] hover:text-[#191919]">
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
-            <div className="p-6 flex flex-col gap-4">
-              <div className="border-2 border-dashed border-outline-variant rounded-xl p-6 text-center flex flex-col items-center justify-center bg-surface-container-lowest">
-                <span className="material-symbols-outlined text-4xl text-secondary mb-2">picture_as_pdf</span>
+            <div className="p-5 flex flex-col gap-4">
+              <div className="border-2 border-dashed border-[#d1d0c9] rounded-xl p-6 text-center flex flex-col items-center justify-center bg-[#faf9f6]">
+                <span className="material-symbols-outlined text-4xl text-[#777777] mb-2">picture_as_pdf</span>
                 <input 
                   type="file" 
                   accept=".pdf" 
@@ -269,19 +307,21 @@ export default function KnowledgeBasePage() {
                   id="pdf-upload"
                   disabled={uploading}
                 />
-                <label htmlFor="pdf-upload" className="cursor-pointer bg-secondary-container text-on-secondary-container px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 mb-2">
+                <label htmlFor="pdf-upload" className="cursor-pointer bg-[#191919] text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-[#333333] mb-2 shadow-xs">
                   Pilih File PDF
                 </label>
-                <p className="text-xs text-secondary">{selectedFile ? selectedFile.name : 'Belum ada file yang dipilih'}</p>
+                <p className="text-xs text-[#666666] font-medium">{selectedFile ? selectedFile.name : 'Belum ada file dipilih'}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1 text-on-surface">Gaya Bahasa untuk Cerita</label>
+                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919] mb-1">
+                  Gaya Bahasa Narasi
+                </label>
                 <select
                   value={uploadStyle}
                   onChange={(e) => setUploadStyle(e.target.value)}
                   disabled={uploading}
-                  className="w-full bg-surface-container border border-outline px-3 py-2 rounded-lg text-sm focus:border-primary focus:outline-none"
+                  className="w-full bg-[#faf9f6] border border-[#e8e7e0] px-3 py-2 rounded-lg text-xs font-medium text-[#191919] focus:border-[#191919] outline-none"
                 >
                   <option value="santai-storytelling">Santai Storytelling</option>
                   <option value="semi-formal-edukatif">Semi-Formal Edukatif</option>
@@ -290,24 +330,24 @@ export default function KnowledgeBasePage() {
               </div>
               
               {uploading && (
-                <div className="flex flex-col items-center gap-2 py-4">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-sm text-secondary text-center">Sedang memproses PDF dan memotong teks (auto-chunking)...</p>
+                <div className="flex flex-col items-center gap-2 py-3">
+                  <span className="material-symbols-outlined animate-spin text-2xl text-[#191919]">progress_activity</span>
+                  <p className="text-xs text-[#666666] text-center">Sedang memproses PDF dan memotong teks (intelligent chunking)...</p>
                 </div>
               )}
             </div>
-            <div className="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+            <div className="p-4 border-t border-[#e8e7e0] bg-[#faf9f6] flex justify-end gap-2">
               <button
                 onClick={() => setShowUploadModal(false)}
                 disabled={uploading}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#666666] hover:bg-[#e8e7e0] disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 onClick={uploadPdf}
                 disabled={!selectedFile || uploading}
-                className="bg-primary text-on-primary px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-2"
+                className="bg-[#191919] text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#333333] disabled:opacity-50 flex items-center gap-1.5"
               >
                 {uploading ? 'Memproses...' : 'Upload & Ekstrak'}
               </button>

@@ -5,7 +5,7 @@ import { format } from "date-fns";
 export default async function DashboardPage() {
   const articles = await prisma.article.findMany({
     orderBy: { createdAt: "desc" },
-    take: 5,
+    take: 6,
   });
 
   const totalArticles = await prisma.article.count();
@@ -17,170 +17,214 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="flex-grow p-5 md:p-10 max-w-[1400px] mx-auto w-full">
-      <div className="md:hidden mb-8">
-        <h2 className="text-3xl font-semibold text-on-surface m-0 tracking-tight">
-          Overview
-        </h2>
+    <div className="flex-grow p-6 md:p-10 max-w-[1300px] mx-auto w-full">
+      {/* Editorial Header */}
+      <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#e8e7e0] pb-6 gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-[11px] font-mono font-bold tracking-wider text-[#777777] uppercase mb-1">
+            <span>EDITORIAL DESK</span>
+            <span>/</span>
+            <span className="text-[#c8102e]">OVERVIEW</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#191919] tracking-tight font-sans">
+            Editorial Overview
+          </h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/article/new"
+            className="px-4 py-2 bg-[#191919] hover:bg-[#333333] text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            New Story
+          </Link>
+        </div>
       </div>
 
-      <div className="hidden md:flex items-center mb-8">
-        <h2 className="text-3xl font-semibold text-on-surface m-0 tracking-tight">
-          Overview
-        </h2>
-      </div>
-
-      {/* Bento Grid Layout */}
+      {/* Swiss Bento Metrics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Metrics (Spans 8 cols on lg) */}
-        <section className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-2 h-fit">
-          {/* Metric Card 1 */}
-          <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex flex-col justify-between min-h-[140px]">
-            <div className="flex items-center gap-2 text-secondary mb-2">
-              <span className="material-symbols-outlined text-[20px]">
-                article
+        {/* Metric Cards (8 cols on lg) */}
+        <section className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Total Content */}
+          <div className="bg-white p-6 rounded-xl border border-[#e8e7e0] flex flex-col justify-between shadow-xs">
+            <div className="flex items-center justify-between text-[#777777]">
+              <span className="text-[11px] font-mono font-bold tracking-wider uppercase">
+                Total Stories
               </span>
-              <span className="text-sm font-medium tracking-wide">
-                Total Content
-              </span>
+              <span className="material-symbols-outlined text-[18px]">article</span>
             </div>
-            <div className="flex items-end justify-between">
-              <span className="text-5xl font-semibold text-on-surface tracking-tight">
+            <div className="mt-4">
+              <span className="text-4xl md:text-5xl font-black text-[#191919] tracking-tight font-sans">
                 {totalArticles}
               </span>
+              <p className="text-xs text-[#888888] mt-1 font-medium">Articles & Podcasts</p>
             </div>
           </div>
-          {/* Metric Card 2 */}
-          <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex flex-col justify-between min-h-[140px]">
-            <div className="flex items-center gap-2 text-secondary mb-2">
-              <span className="material-symbols-outlined text-[20px]">
-                publish
-              </span>
-              <span className="text-sm font-medium tracking-wide">
+
+          {/* Published */}
+          <div className="bg-white p-6 rounded-xl border border-[#e8e7e0] flex flex-col justify-between shadow-xs">
+            <div className="flex items-center justify-between text-[#777777]">
+              <span className="text-[11px] font-mono font-bold tracking-wider uppercase">
                 Published
               </span>
+              <span className="w-2 h-2 rounded-full bg-[#1a8917]"></span>
             </div>
-            <div className="flex items-end justify-between">
-              <span className="text-5xl font-semibold text-on-surface tracking-tight">
+            <div className="mt-4">
+              <span className="text-4xl md:text-5xl font-black text-[#1a8917] tracking-tight font-sans">
                 {publishedArticles}
               </span>
+              <p className="text-xs text-[#888888] mt-1 font-medium">Live on Medium / Feed</p>
             </div>
           </div>
-          {/* Metric Card 3 */}
-          <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant flex flex-col justify-between min-h-[140px]">
-            <div className="flex items-center gap-2 text-secondary mb-2">
-              <span className="material-symbols-outlined text-[20px]">
-                schedule
+
+          {/* Scheduled / Ready */}
+          <div className="bg-white p-6 rounded-xl border border-[#e8e7e0] flex flex-col justify-between shadow-xs">
+            <div className="flex items-center justify-between text-[#777777]">
+              <span className="text-[11px] font-mono font-bold tracking-wider uppercase">
+                Ready / Queue
               </span>
-              <span className="text-sm font-medium tracking-wide">
-                Scheduled
-              </span>
+              <span className="material-symbols-outlined text-[18px]">schedule</span>
             </div>
-            <div className="flex items-end justify-between">
-              <span className="text-5xl font-semibold text-on-surface tracking-tight">
+            <div className="mt-4">
+              <span className="text-4xl md:text-5xl font-black text-[#191919] tracking-tight font-sans">
                 {scheduledArticles}
               </span>
+              <p className="text-xs text-[#888888] mt-1 font-medium">Ready for broadcast</p>
             </div>
           </div>
         </section>
 
-        {/* Upcoming Schedule (Spans 4 cols on lg) */}
-        <section className="lg:col-span-4 bg-surface-container-low p-6 rounded-xl row-span-2 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-medium text-on-surface m-0">
-              Schedule
+        {/* Schedule Mini-Panel (4 cols on lg) */}
+        <section className="lg:col-span-4 bg-white p-6 rounded-xl border border-[#e8e7e0] flex flex-col shadow-xs row-span-2">
+          <div className="flex items-center justify-between border-b border-[#e8e7e0] pb-3 mb-5">
+            <h3 className="text-sm font-bold tracking-wide uppercase font-mono text-[#191919] flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-[#c8102e]">calendar_month</span>
+              Publication Queue
             </h3>
             <Link
-              href="/dashboard/articles"
-              className="text-secondary hover:text-on-surface transition-colors"
+              href="/dashboard/calendar"
+              className="text-xs font-semibold text-[#1a8917] hover:underline"
             >
-              <span className="material-symbols-outlined">more_horiz</span>
+              Full Calendar
             </Link>
           </div>
-          <div className="flex-grow flex flex-col gap-6">
+
+          <div className="flex-grow flex flex-col gap-4">
             {articles
               .filter((a) => a.status === "READY" || a.status === "PUBLISHED")
-              .slice(0, 3)
+              .slice(0, 4)
               .map((article) => (
-                <div key={article.id} className="flex gap-4 group cursor-pointer">
-                  <div className="flex flex-col items-center min-w-[40px]">
-                    <span className="text-sm font-medium text-secondary">
+                <Link
+                  key={article.id}
+                  href={`/dashboard/article/${article.id}`}
+                  className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-[#f4f3ef] transition-colors group"
+                >
+                  <div className="flex flex-col items-center justify-center w-10 h-10 rounded bg-[#f0eee6] text-[#191919] shrink-0 font-mono">
+                    <span className="text-[9px] uppercase font-bold text-[#777777]">
                       {format(new Date(article.createdAt), "MMM")}
                     </span>
-                    <span className="text-2xl font-medium text-on-surface leading-none mt-1">
+                    <span className="text-sm font-bold leading-none">
                       {format(new Date(article.createdAt), "dd")}
                     </span>
                   </div>
-                  <div className="flex-grow border-l-2 border-primary pl-4 py-1">
-                    <h4 className="text-sm font-medium text-on-surface mb-1 group-hover:text-primary transition-colors">
-                      {article.title || "Untitled Article"}
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs font-bold text-[#191919] line-clamp-1 group-hover:text-[#1a8917] transition-colors">
+                      {article.title || "Untitled Story"}
                     </h4>
-                    <p className="text-xs text-secondary">
-                      {article.status === "PUBLISHED" ? "Published" : "Scheduled"}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                        article.status === "PUBLISHED" 
+                          ? "bg-[#1a8917]/10 text-[#1a8917]" 
+                          : "bg-[#e8e7e1] text-[#555555]"
+                      }`}>
+                        {article.status}
+                      </span>
+                      <span className="text-[10px] text-[#888888] font-mono">
+                        {article.contentType}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
+
             {articles.filter((a) => a.status === "READY" || a.status === "PUBLISHED").length === 0 && (
-              <p className="text-sm text-secondary italic">No upcoming scheduled items.</p>
+              <div className="py-8 text-center text-xs text-[#888888] italic">
+                Belum ada antrean jadwal konten.
+              </div>
             )}
           </div>
+
           <Link
-            href="/dashboard/articles"
-            className="mt-6 w-full py-2 px-4 border border-outline-variant rounded-lg text-sm font-medium text-center text-on-surface hover:bg-surface-container transition-colors block"
+            href="/dashboard/calendar"
+            className="mt-4 w-full py-2 border border-[#d1d0c9] rounded-lg text-xs font-semibold text-center text-[#191919] hover:bg-[#191919] hover:text-white transition-all block"
           >
-            View All Articles
+            Open Schedule Calendar
           </Link>
         </section>
 
-        {/* Recent Drafts (Spans 8 cols on lg) */}
-        <section className="lg:col-span-8 mt-8 lg:mt-0">
-          <div className="flex items-center justify-between mb-6 border-b border-outline-variant pb-4">
-            <h3 className="text-2xl font-medium text-on-surface m-0">
-              Recent Content
+        {/* Recent Stories (8 cols on lg) */}
+        <section className="lg:col-span-8 bg-white p-6 rounded-xl border border-[#e8e7e0] shadow-xs">
+          <div className="flex items-center justify-between border-b border-[#e8e7e0] pb-4 mb-4">
+            <h3 className="text-sm font-bold tracking-wide uppercase font-mono text-[#191919] flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-[#191919]">auto_stories</span>
+              Recent Stories
             </h3>
             <Link
-              className="text-sm font-medium text-primary hover:underline"
+              className="text-xs font-semibold text-[#1a8917] hover:underline flex items-center gap-1"
               href="/dashboard/articles"
             >
-              View All
+              <span>View All</span>
+              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
             </Link>
           </div>
-          <div className="flex flex-col gap-4">
+
+          <div className="divide-y divide-[#f0eee6]">
             {articles.map((article) => (
               <Link
                 href={`/dashboard/article/${article.id}`}
                 key={article.id}
-                className="flex gap-4 p-4 rounded-xl hover:bg-surface-container-lowest transition-colors group cursor-pointer border border-transparent hover:border-outline-variant"
+                className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-[#faf9f6] px-2 rounded-lg transition-colors"
               >
-                <div className="w-24 h-24 rounded-lg bg-surface-variant overflow-hidden shrink-0 hidden sm:flex items-center justify-center text-secondary group-hover:text-primary transition-colors">
-                  <span className="material-symbols-outlined text-4xl">
-                    {article.contentType === "PODCAST" ? "mic" : "article"}
-                  </span>
-                </div>
-                <div className="flex flex-col justify-center flex-grow">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-1 bg-surface-container text-on-surface text-xs rounded-md font-medium">
-                      {article.status}
-                    </span>
-                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-md font-medium">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-[#f0eee6] text-[#555555] rounded">
                       {article.contentType}
                     </span>
-                    <span className="text-xs text-secondary">
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                      article.status === 'PUBLISHED' ? 'bg-[#1a8917]/10 text-[#1a8917]' :
+                      article.status === 'READY' ? 'bg-[#191919] text-white' : 'bg-[#edece7] text-[#666666]'
+                    }`}>
+                      {article.status}
+                    </span>
+                    <span className="text-[11px] text-[#888888]">
                       {format(new Date(article.createdAt), "MMM d, yyyy")}
                     </span>
                   </div>
-                  <h4 className="text-xl font-medium text-on-surface mb-1 group-hover:text-primary transition-colors">
-                    {article.title || "Untitled"}
+                  <h4 className="text-base font-bold text-[#191919] group-hover:text-[#1a8917] transition-colors leading-snug line-clamp-1">
+                    {article.title || "Untitled Story"}
                   </h4>
-                  <p className="text-sm text-secondary line-clamp-1">
-                    {article.author ? `By ${article.author}` : "No author specified"}
+                  <p className="text-xs text-[#666666] mt-0.5 font-editorial-serif line-clamp-1">
+                    {article.author ? `Karya ${article.author}` : "Penulis tidak dicantumkan"}
                   </p>
+                </div>
+
+                <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+                  {article.monetizationValue ? (
+                    <span className="text-xs font-mono font-bold px-2.5 py-1 rounded bg-[#f0eee6] text-[#191919]">
+                      Score: {article.monetizationValue}/100
+                    </span>
+                  ) : null}
+                  <span className="material-symbols-outlined text-[18px] text-[#aaaaaa] group-hover:text-[#191919] transition-colors">
+                    chevron_right
+                  </span>
                 </div>
               </Link>
             ))}
+
             {articles.length === 0 && (
-              <p className="text-sm text-secondary italic">No content generated yet.</p>
+              <div className="py-12 text-center text-sm text-[#888888]">
+                Belum ada konten dibuat. Mulai dengan membuat artikel pertama Anda.
+              </div>
             )}
           </div>
         </section>
