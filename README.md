@@ -1,86 +1,108 @@
-# AI Content Generator (AsikReview Web App)
+# AI Content Generator (AsikReview Editorial Studio)
 
-Proyek ini adalah aplikasi web berbasis **Next.js** yang dilengkapi dengan generator gambar/banner (Canvas API) dan integrasi **Prisma ORM**.
+Aplikasi web editorial berbasis **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4 (Swiss Editorial Design)**, **Prisma ORM (SQLite)**, dan **Elasticsearch (RAG Knowledge Base)** yang dilengkapi dengan:
+- **5-Agent AI Pipeline**: Ideator → Writer → Editor → Evaluator → Designer
+- **Live Canvas Banner Studio**: Desain cover Medium (16:9) & Instagram (1:1) dengan ekspor instan
+- **AI Podcast Generator**: Multi-segment audio script dengan format SSML kompatibel ElevenLabs
+- **RAG Knowledge Base**: Ekstraksi buku PDF & chat tanya-jawab berbasis Elasticsearch
+
+---
 
 ## 📋 Prasyarat Sistem
 
 Sebelum menginstal proyek ini, pastikan sistem Anda memiliki:
 - **Node.js** (versi 18.x atau lebih baru)
-- **npm**, **yarn**, **pnpm**, atau **bun** (pilih salah satu)
-- **SQLite** (digunakan sebagai database default melalui Prisma, tidak perlu install server terpisah)
+- **npm**, **yarn**, **pnpm**, atau **bun**
+- **Docker Desktop** *(opsional tapi direkomendasikan untuk modul RAG Knowledge Base / Elasticsearch)*
 
 ---
 
-## 🚀 Instalasi dari Awal hingga Berjalan
+## 🏗️ Arsitektur Penyimpanan & Layanan
 
-Ikuti langkah-langkah di bawah ini untuk menginstal, mengatur database, hingga menjalankan aplikasi di komputer lokal Anda.
+Aplikasi ini menggunakan pendekatan arsitektur *dual-engine* yang tangguh:
 
-### 1. Kloning Repositori & Masuk ke Folder Proyek
+1. **SQLite (Prisma ORM)**: Menyimpan data relasional utama (artikel, metadata ulasan, asset banner HTML, jadwal kalender, dan tren audiens). **Aplikasi dapat langsung berjalan tanpa setup server eksternal**.
+2. **Elasticsearch (Docker)**: Digunakan khusus untuk modul **Knowledge Base** (`/dashboard/knowledge`) dalam membedah PDF buku menjadi ratusan bab/bagian serta pencarian konteks RAG yang cepat. Jika Elasticsearch belum aktif, fitur ulasan buku & banner reguler tetap dapat berjalan normal berkat sistem *graceful fallback*.
+
+---
+
+## 🚀 Panduan Instalasi & Menjalankan Aplikasi
+
+### 1. Kloning Repositori
 ```bash
 git clone <url-repositori-anda>
-cd ai-content-generator
+cd generator-content
 ```
 
 ### 2. Instalasi Dependensi
-Jalankan perintah berikut untuk menginstal semua library yang dibutuhkan (React, Next.js, Prisma, dll).
 ```bash
-npm install
-# atau jika menggunakan yarn/pnpm:
-# yarn install
-# pnpm install
+npm install --legacy-peer-deps
 ```
 
 ### 3. Konfigurasi Environment Variables
-Buat file `.env` di root direktori proyek (jika belum ada) dan sesuaikan konfigurasi database. Untuk SQLite, Anda cukup menambahkan baris berikut:
-
-**`.env`**
+Salin file `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+```
+Isi variabel yang dibutuhkan:
 ```env
 DATABASE_URL="file:./dev.db"
+OPENAI_API_KEY="sk-proj-..."
+ELASTICSEARCH_URL="http://localhost:9200"
 ```
-*(Catatan: Anda juga bisa menyalin `.env.example` ke `.env` jika tersedia).*
 
-### 4. Menjalankan Migrasi Database (Prisma)
-Agar struktur tabel database sesuai dengan skema yang ada di `prisma/schema.prisma`, jalankan perintah migrasi. Ini juga akan meng-generate Prisma Client.
+### 4. Menjalankan Elasticsearch & Kibana (Docker Compose)
+Untuk mengaktifkan fitur **Knowledge Base & RAG PDF Book Indexing**, jalankan kontainer Elasticsearch secara lokal:
+```bash
+docker compose up -d
+```
+*Layanan yang berjalan:*
+- **Elasticsearch**: [http://localhost:9200](http://localhost:9200) (Data tersimpan di volume `es_data`)
+- **Kibana** *(UI Manajemen Index)*: [http://localhost:5601](http://localhost:5601)
+
+Untuk menghentikan kontainer:
+```bash
+docker compose down
+```
+
+### 5. Menjalankan Migrasi & Seeder Database
+Inisialisasi tabel SQLite dan data contoh template banner:
 ```bash
 npx prisma migrate dev --name init
-```
-*Perintah ini akan membuat file database SQLite baru di folder `prisma/dev.db` (jika belum ada) dan menyinkronkan skemanya.*
-
-### 5. Menjalankan Seeder Database
-Untuk mengisi database dengan data awal (seperti template banner default), jalankan perintah seed:
-```bash
-npx prisma db seed
-# atau
 npm run seed
 ```
-*Script seeder (`prisma/seed.ts`) akan memasukkan data-data contoh seperti template banner "Review Buku", "Kutipan", dan "Promosi Podcast" ke dalam database.*
 
 ### 6. Menjalankan Server Development
-Sekarang aplikasi sudah siap digunakan! Jalankan server pengembangan (development server):
 ```bash
 npm run dev
-# atau
-yarn dev
-# atau
-pnpm dev
 ```
-
-Buka [http://localhost:3300](http://localhost:3300) (atau port yang tertera pada terminal Anda) di browser web untuk melihat hasilnya.
+Buka [http://localhost:3300](http://localhost:3300) di browser Anda.
 
 ---
 
 ## 🛠️ Perintah Berguna (Scripts)
 
-Berikut adalah beberapa perintah tambahan yang sering digunakan selama masa pengembangan:
+| Perintah | Deskripsi |
+| :--- | :--- |
+| `npm run dev` | Menjalankan server development di port 3300 |
+| `npm run test` | Menjalankan automated unit test suite (Vitest) |
+| `npm run build` | Melakukan compile dan build production Next.js |
+| `npm run start` | Menjalankan production server di port 3300 |
+| `npm run lint` | Menjalankan pengecekan linter kode ESLint |
+| `npx prisma studio` | Membuka antarmuka grafis untuk melihat database SQLite |
+| `docker compose up -d` | Menjalankan cluster Elasticsearch & Kibana lokal |
 
-- `npm run dev` : Menjalankan aplikasi dalam mode *development* (biasanya berjalan di port 3300).
-- `npm run build` : Mem-build aplikasi untuk *production*.
-- `npm run start` : Menjalankan aplikasi versi *production* (pastikan sudah dibuild sebelumnya).
-- `npm run lint` : Menjalankan linter untuk mengecek penulisan kode (ESLint).
-- `npx prisma studio` : Membuka antarmuka grafis di browser untuk melihat dan mengelola isi database.
+---
 
-## 🗂️ Struktur Penting Proyek
-- `src/app/` : Berisi sistem *routing* (halaman dan API) bawaan Next.js App Router.
-- `src/components/` : Komponen antarmuka pengguna (UI) React yang dapat digunakan ulang.
-- `prisma/` : Konfigurasi database, migrasi, dan script seeder (`schema.prisma` dan `seed.ts`).
-- `public/` : Berisi aset statis (gambar, favicon, dll).
+## 🗂️ Struktur Direktori Proyek
+
+- `src/app/` : Routing sistem Next.js App Router (Halaman & REST API).
+- `src/components/` : Komponen antarmuka pengguna (UI) React bergaya Swiss Editorial.
+- `src/lib/` :
+  - `services/agents/` : Multi-agent pipeline (Ideator, Writer, Editor, Evaluator, Designer, Podcaster).
+  - `validation/` : Skema validasi request berbasis Zod.
+  - `security/` : Sanitasi HTML dan proteksi keamanan.
+  - `elasticsearch.ts` : Client dan health check Elasticsearch RAG.
+- `tests/unit/` : Automated test suite Vitest.
+- `prisma/` : Skema database SQLite dan script seeder (`schema.prisma`, `seed.ts`).
+- `docker-compose.yml` : Konfigurasi lokal Elasticsearch 8.x dan Kibana.
