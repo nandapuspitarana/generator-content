@@ -121,6 +121,10 @@ async function callOpenAI(model: string, systemPrompt: string, userPrompt: strin
 }
 
 export async function runPodcaster(topic: string, author: string, sourceText: string, notes: string, length: string, apiKey: string): Promise<string> {
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY is required for podcast generator.");
+  }
+
   // 1. Chunking text (max 40k chars per chunk to safely fit gpt-4o-mini window and response limits)
   const chunks = chunkText(sourceText, 40000);
   

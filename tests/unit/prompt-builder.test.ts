@@ -34,11 +34,52 @@ describe("Prompt Builder Utilities", () => {
     expect(prompt).toContain("16:9");
   });
 
+  it("should use fallback points if tag has no summary in banner prompt", () => {
+    const tagWithoutSummary: KnowledgeTag = { ...mockTag, summary: undefined };
+    const prompt = buildBannerPrompt(tagWithoutSummary, mockChapters, "gpt");
+    expect(prompt).toContain("- Poin 1\n- Poin 2\n- Poin 3");
+  });
+
   it("should build Instagram caption prompt with storytelling hook", () => {
     const prompt = buildInstagramCaptionPrompt(mockTag, mockChapters, "gpt");
     expect(prompt).toContain("Atomic Habits");
     expect(prompt).toContain("ngobrol santai");
     expect(prompt).toContain("Call-to-Action");
+  });
+
+  it("should build Instagram caption with investigative hook for narasi-investigatif style", () => {
+    const investigativeTag: KnowledgeTag = { ...mockTag, writingStyle: "narasi-investigatif" };
+    const prompt = buildInstagramCaptionPrompt(investigativeTag, mockChapters, "gpt");
+    expect(prompt).toContain("misterius, memancing rasa ingin tahu");
+  });
+
+  it("should build Instagram caption with informative hook for semi-formal-edukatif style", () => {
+    const edukatifTag: KnowledgeTag = { ...mockTag, writingStyle: "semi-formal-edukatif" };
+    const prompt = buildInstagramCaptionPrompt(edukatifTag, mockChapters, "gpt");
+    expect(prompt).toContain("informatif, jelas, dan edukatif");
+  });
+
+  it("should truncate long summaries to 500 characters in carousel prompt", () => {
+    const longSummaryTag: KnowledgeTag = {
+      ...mockTag,
+      summary: "Word ".repeat(150), // 750 chars
+    };
+    const prompt = buildInstagramCarouselPrompt(longSummaryTag, mockChapters, "gemini");
+    expect(prompt).toContain("...");
+    expect(prompt).not.toContain("Word ".repeat(150));
+  });
+
+  it("should handle tag without summary in carousel prompt gracefully", () => {
+    const emptySummaryTag: KnowledgeTag = { ...mockTag, summary: undefined };
+    const prompt = buildInstagramCarouselPrompt(emptySummaryTag, mockChapters, "gpt");
+    expect(prompt).toContain("Belum ada ringkasan.");
+  });
+
+  it("should format platform instruction differently for gemini vs gpt", () => {
+    const gptPrompt = buildBannerPrompt(mockTag, mockChapters, "gpt");
+    const geminiPrompt = buildBannerPrompt(mockTag, mockChapters, "gemini");
+    expect(gptPrompt).toContain("tanpa teks penjelasan tambahan");
+    expect(geminiPrompt).toContain("tanpa pembukaan kata-kata basa-basi");
   });
 
   it("should build Instagram carousel prompt with slide breakdown", () => {
@@ -53,5 +94,12 @@ describe("Prompt Builder Utilities", () => {
 
     const ig = buildPrompt("ig-caption", mockTag, mockChapters, "gpt");
     expect(ig).toContain("Instagram");
+
+    const carousel = buildPrompt("ig-carousel", mockTag, mockChapters, "gpt");
+    expect(carousel).toContain("Slide 1");
+
+    // Unknown type returns empty string
+    const unknown = buildPrompt("unknown" as any, mockTag, mockChapters, "gpt");
+    expect(unknown).toBe("");
   });
 });

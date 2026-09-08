@@ -52,14 +52,18 @@ export async function runSocialCrawler(keyword: string) {
     throw new Error("Implementasi Actor Apify spesifik belum diisi. Anda harus memilih Actor Facebook/LinkedIn di panel Apify Anda dan memperbarui ID-nya di crawler.ts.");
   }
 
-  // Simpan hasil crawling ke database (SocialTrend)
-  const savedTrends = [];
-  for (const item of crawledData) {
-    const trend = await prisma.socialTrend.create({
-      data: item
-    });
-    savedTrends.push(trend);
-  }
+  // Simpan hasil crawling ke database (SocialTrend) secara batch (createMany) untuk performa tinggi
+  if (crawledData.length === 0) return [];
+
+  await prisma.socialTrend.createMany({
+    data: crawledData
+  });
+
+  const savedTrends = await prisma.socialTrend.findMany({
+    where: { keyword },
+    orderBy: { createdAt: 'desc' },
+    take: crawledData.length
+  });
 
   return savedTrends;
 }

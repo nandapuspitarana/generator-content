@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-
-function isPrivateIpOrHost(hostname: string): boolean {
-  const lower = hostname.toLowerCase()
-  if (lower === "localhost" || lower === "127.0.0.1" || lower === "0.0.0.0" || lower === "::1") return true
-  if (lower === "169.254.169.254" || lower === "metadata.google.internal") return true // Cloud metadata endpoints
-  
-  // Private IPv4 ranges
-  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(lower)) return true
-  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(lower)) return true
-  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(lower)) return true
-
-  return false
-}
+import { validateSafeUrl } from "@/lib/security/url-guard"
 
 export async function GET(request: NextRequest) {
   const urlParam = request.nextUrl.searchParams.get("url")
@@ -20,13 +8,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const parsed = new URL(urlParam)
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return NextResponse.json({ error: "Invalid protocol. Only http and https are allowed." }, { status: 400 })
-    }
-
-    if (isPrivateIpOrHost(parsed.hostname)) {
-      return NextResponse.json({ error: "Access to private or internal addresses is forbidden." }, { status: 403 })
+    const validation = validateSafeUrl(urlParam)
+    if (!validation.isValid) {
+      const isForbidden = validation.error?.includes("forbidden") || validation.error?.includes("private")
+      return NextResponse.json({ error: validation.error }, { status: isForbidden ? 403 : 400 })
     }
 
     const controller = new AbortController()

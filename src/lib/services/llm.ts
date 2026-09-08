@@ -1,4 +1,5 @@
 import { GenerateContentRequest, ParsedResult, KnowledgeTag, KnowledgeChapter, WritingStyle } from "@/lib/types/models"
+import { fetchSafeImage } from "@/lib/security/url-guard"
 
 /**
  * Real LLM Service using OpenAI API
@@ -9,18 +10,15 @@ export async function generateContent(req: GenerateContentRequest): Promise<Pars
     throw new Error("OPENAI_API_KEY is not set in environment variables.");
   }
 
-  let processedImageUrl = req.imageUrl;
+  let processedImageUrl: string | undefined = undefined;
   if (req.imageUrl) {
     try {
-      const res = await fetch(req.imageUrl);
-      if (res.ok) {
-        const arrayBuffer = await res.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const contentType = res.headers.get("content-type") || "image/jpeg";
-        processedImageUrl = `data:${contentType};base64,${buffer.toString("base64")}`;
-      }
+      // Safely fetch remote image with SSRF protection and 2MB limit
+      const { buffer, contentType } = await fetchSafeImage(req.imageUrl, 2 * 1024 * 1024);
+      processedImageUrl = `data:${contentType};base64,${buffer.toString("base64")}`;
     } catch (e) {
-      console.error("Failed to fetch and convert image to base64", e);
+      console.error("Failed to safely fetch image for LLM preview:", e);
+      processedImageUrl = undefined;
     }
   }
 
