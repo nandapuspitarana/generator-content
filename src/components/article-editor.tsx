@@ -50,6 +50,11 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [notification, setNotification] = useState<{ type: "success" | "error", message: string } | null>(null)
+  const [showMediumModal, setShowMediumModal] = useState(false)
+  const [mediumPublishStatus, setMediumPublishStatus] = useState<"draft" | "public">("draft")
+  const [mediumTags, setMediumTags] = useState("book-review, asikreview, reading")
+  const [isSyncingMedium, setIsSyncingMedium] = useState(false)
+  const [currentMediumUrl, setCurrentMediumUrl] = useState<string | null>(initialArticle?.mediumUrl || null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
@@ -145,26 +150,33 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
     }
   }
 
-  const handlePublishToMedium = async () => {
+  const handleExecuteMediumSync = async () => {
     if (!initialArticle?.id) {
       showNotification("error", "Simpan artikel terlebih dahulu!");
       return;
     }
-    setIsSaving(true);
+    setIsSyncingMedium(true);
     try {
+      const cleanTags = mediumTags.split(",").map(t => t.trim()).filter(Boolean);
       const res = await fetch("/api/medium/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ articleId: initialArticle.id })
+        body: JSON.stringify({ 
+          articleId: initialArticle.id,
+          publishStatus: mediumPublishStatus,
+          tags: cleanTags
+        })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal publish ke Medium");
-      showNotification("success", "Berhasil dipublish ke Medium sebagai Draft!");
+      if (!res.ok) throw new Error(data.error || "Gagal sinkronisasi ke Medium");
+      setCurrentMediumUrl(data.url);
+      showNotification("success", `Berhasil disinkronkan ke Medium sebagai ${mediumPublishStatus.toUpperCase()}!`);
+      setShowMediumModal(false);
       router.refresh();
     } catch (e: any) {
       showNotification("error", e.message || "Gagal publish ke Medium.");
     } finally {
-      setIsSaving(false);
+      setIsSyncingMedium(false);
     }
   }
 
@@ -454,26 +466,34 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
 
         {/* Publish Action Footer */}
         <div className="mt-auto p-6 bg-[#faf9f6] border-t border-[#e8e7e0] flex flex-col gap-2.5">
-          {initialArticle?.mediumUrl && (
-            <a 
-              href={initialArticle.mediumUrl} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="w-full bg-[#191919] text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-[#333333] transition-colors flex justify-center items-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[16px]">open_in_new</span>
-              View Live on Medium
-            </a>
-          )}
-          
-          {isEditMode && !initialArticle?.mediumUrl && (
+          {currentMediumUrl ? (
+            <div className="flex flex-col gap-1.5">
+              <a 
+                href={currentMediumUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="w-full bg-[#191919] text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-[#333333] transition-colors flex justify-center items-center gap-2 shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                View Live on Medium
+              </a>
+              <button
+                onClick={() => setShowMediumModal(true)}
+                disabled={isSaving || isSyncingMedium}
+                className="w-full bg-[#faf9f6] border border-[#d1d0c9] hover:border-[#191919] text-[#191919] text-xs font-semibold py-2 rounded-lg transition-colors flex justify-center items-center gap-1.5 disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-[15px]">sync</span>
+                Re-sync to Medium
+              </button>
+            </div>
+          ) : isEditMode && (
             <button
-              onClick={handlePublishToMedium}
-              disabled={isSaving}
-              className="w-full bg-[#191919] text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-[#333333] transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
+              onClick={() => setShowMediumModal(true)}
+              disabled={isSaving || isSyncingMedium}
+              className="w-full bg-[#191919] text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-[#333333] transition-colors flex justify-center items-center gap-2 disabled:opacity-50 shadow-xs"
             >
-              <span className="material-symbols-outlined text-[16px]">post_add</span>
-              Publish Draft to Medium
+              <span className="material-symbols-outlined text-[16px]">sync_alt</span>
+              Sync Story to Medium
             </button>
           )}
 
@@ -510,6 +530,98 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
           )}
         </div>
       </aside>
+
+      {/* Medium Sync Options Modal */}
+      {showMediumModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-2xl border border-[#e8e7e0]">
+            <div className="p-5 border-b border-[#e8e7e0] flex justify-between items-center bg-[#faf9f6]">
+              <div>
+                <h3 className="text-sm font-bold text-[#191919] font-mono uppercase tracking-wider">
+                  Sync Story to Medium
+                </h3>
+                <p className="text-[11px] text-[#777777] mt-0.5 truncate max-w-[320px]">
+                  {title || "Untitled Story"}
+                </p>
+              </div>
+              <button onClick={() => !isSyncingMedium && setShowMediumModal(false)} className="text-[#888888] hover:text-[#191919]">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <div className="p-5 flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919] mb-1">
+                  Status Publikasi di Medium
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMediumPublishStatus("draft")}
+                    className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all text-left ${
+                      mediumPublishStatus === "draft"
+                        ? "bg-[#191919] text-white border-[#191919]"
+                        : "bg-[#faf9f6] text-[#555555] border-[#e8e7e0] hover:border-[#191919]"
+                    }`}
+                  >
+                    Draft (Disarankan)
+                    <span className="block text-[10px] opacity-75 font-normal">Review sebelum tayang</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediumPublishStatus("public")}
+                    className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-all text-left ${
+                      mediumPublishStatus === "public"
+                        ? "bg-[#1a8917] text-white border-[#1a8917]"
+                        : "bg-[#faf9f6] text-[#555555] border-[#e8e7e0] hover:border-[#1a8917]"
+                    }`}
+                  >
+                    Public Langsung
+                    <span className="block text-[10px] opacity-75 font-normal">Langsung tayang publik</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#191919] mb-1">
+                  Medium Tags (Maksimal 5, pisahkan koma)
+                </label>
+                <input
+                  type="text"
+                  value={mediumTags}
+                  onChange={(e) => setMediumTags(e.target.value)}
+                  placeholder="book-review, nonfiction, self-improvement"
+                  className="w-full bg-[#faf9f6] border border-[#e8e7e0] px-3 py-2 rounded-lg text-xs font-medium text-[#191919] focus:border-[#191919] outline-none"
+                />
+              </div>
+
+              {isSyncingMedium && (
+                <div className="flex items-center justify-center gap-2 py-3 text-xs text-[#666666]">
+                  <span className="material-symbols-outlined animate-spin text-base text-[#191919]">progress_activity</span>
+                  <span>Mengunggah artikel ke Medium API...</span>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-[#e8e7e0] bg-[#faf9f6] flex justify-end gap-2">
+              <button
+                onClick={() => setShowMediumModal(false)}
+                disabled={isSyncingMedium}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#666666] hover:bg-[#e8e7e0] disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleExecuteMediumSync}
+                disabled={isSyncingMedium}
+                className="bg-[#1a8917] hover:bg-[#156d12] text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+              >
+                {isSyncingMedium ? "Menyinkronkan..." : "Kirim ke Medium"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

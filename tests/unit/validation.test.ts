@@ -5,6 +5,8 @@ import {
   PodcastGenerateSchema,
   KnowledgeTagSchema,
   BannerCreateSchema,
+  MediumSyncSchema,
+  MediumBatchSyncSchema,
 } from "@/lib/validation/schemas";
 
 describe("Zod Validation Schemas", () => {
@@ -107,6 +109,58 @@ describe("Zod Validation Schemas", () => {
         template: "classic",
       };
       expect(BannerCreateSchema.safeParse(valid).success).toBe(true);
+    });
+  });
+
+  describe("MediumSyncSchema", () => {
+    it("should validate valid single article sync options", () => {
+      const valid = {
+        articleId: "art-12345",
+        publishStatus: "draft",
+        tags: ["book-review", "reading"],
+        canonicalUrl: "https://asikreview.com/stories/1",
+      };
+      const result = MediumSyncSchema.safeParse(valid);
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject sync with empty articleId", () => {
+      const invalid = {
+        articleId: "",
+        publishStatus: "draft",
+      };
+      const result = MediumSyncSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject more than 5 tags", () => {
+      const invalid = {
+        articleId: "art-12345",
+        tags: ["one", "two", "three", "four", "five", "six"],
+      };
+      const result = MediumSyncSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("MediumBatchSyncSchema", () => {
+    it("should validate batch sync with array of ids", () => {
+      const valid = {
+        articleIds: ["id-1", "id-2"],
+        publishStatus: "public",
+        tags: ["tech", "startup"],
+      };
+      const result = MediumBatchSyncSchema.safeParse(valid);
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject batch sync with empty array", () => {
+      const invalid = {
+        articleIds: [],
+        publishStatus: "draft",
+      };
+      const result = MediumBatchSyncSchema.safeParse(invalid);
+      expect(result.success).toBe(false);
     });
   });
 });

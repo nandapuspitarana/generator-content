@@ -91,3 +91,26 @@ export const BannerImportAiSchema = z.object({
   content: z.string().min(1, "Konten sumber wajib diisi"),
   format: z.enum(["MEDIUM", "INSTAGRAM"]),
 });
+
+/**
+ * Zod validation schema for Medium Sync
+ */
+export const MediumSyncSchema = z.object({
+  articleId: z.string().min(1, "ID artikel wajib diisi"),
+  publishStatus: z.enum(["draft", "public", "unlisted"]).default("draft"),
+  tags: z.array(z.string()).max(5, "Maksimal 5 tag untuk Medium").optional(),
+  publicationId: z.string().optional().nullable(),
+  canonicalUrl: z.string().url("Format canonical URL tidak valid").optional().or(z.literal("")).nullable(),
+  token: z.string().optional().nullable(),
+});
+
+export type MediumSyncInput = z.infer<typeof MediumSyncSchema>;
+
+export const MediumBatchSyncSchema = z.object({
+  articleIds: z.array(z.string()).min(1, "Pilih minimal 1 artikel untuk disinkronkan"),
+  publishStatus: z.enum(["draft", "public", "unlisted"]).default("draft"),
+  tags: z.array(z.string()).max(5, "Maksimal 5 tag").optional(),
+  token: z.string().optional().nullable(),
+});
+
+export type MediumBatchSyncInput = z.infer<typeof MediumBatchSyncSchema>;

@@ -81,6 +81,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <NavLink href="/dashboard/articles" icon="article" label="Articles" />
               <NavLink href="/dashboard/podcast" icon="mic" label="AI Podcast" />
               <NavLink href="/dashboard/canvas" icon="brush" label="Canvas Studio" />
+              <NavLink href="/dashboard/medium-sync" icon="sync_alt" label="Medium Sync" badge="Live" />
             </ul>
           </div>
 
@@ -126,6 +127,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <span className="font-bold text-[#191919] text-sm">AsikReview</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/medium-sync"
+              className="text-xs bg-[#191919] text-white px-2.5 py-1 rounded font-medium flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[14px]">sync_alt</span>
+              <span>Medium</span>
+            </Link>
             <Link 
               href="/dashboard/article/new" 
               className="bg-[#1a8917] text-white p-1.5 rounded-md hover:bg-[#156d12] transition-colors flex items-center"

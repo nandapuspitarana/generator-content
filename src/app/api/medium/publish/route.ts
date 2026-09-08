@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import { publishToMedium } from "@/lib/services/medium"
+import { MediumSyncSchema } from "@/lib/validation/schemas"
 
 export async function POST(req: NextRequest) {
   try {
-    const token = process.env.MEDIUM_TOKEN
-    if (!token) {
-      return NextResponse.json({ error: "MEDIUM_TOKEN is not configured in the server." }, { status: 500 })
+    const rawBody = await req.json()
+    const validationResult = MediumSyncSchema.safeParse(rawBody)
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.issues.map(i => i.message).join(", ")
+      return NextResponse.json({ error: errorMsg, details: validationResult.error.issues }, { status: 400 })
     }
 
-    const body = await req.json()
-    const { articleId } = body
+    const { articleId, publishStatus, tags, publicationId, canonicalUrl, token: customToken } = validationResult.data
 
-    if (!articleId) {
-      return NextResponse.json({ error: "articleId is required." }, { status: 400 })
+    const token = customToken || process.env.MEDIUM_TOKEN
+    if (!token) {
+      return NextResponse.json({ 
+        error: "MEDIUM_TOKEN belum diatur. Harap masukkan token di formulir atau konfigurasikan di file .env." 
+      }, { status: 400 })
     }
 
     // 1. Fetch Article from DB
@@ -21,73 +28,48 @@ export async function POST(req: NextRequest) {
     })
 
     if (!article) {
-      return NextResponse.json({ error: "Article not found." }, { status: 404 })
+      return NextResponse.json({ error: "Artikel tidak ditemukan di database." }, { status: 404 })
     }
 
     if (!article.markdownContent) {
-      return NextResponse.json({ error: "Article has no markdown content to publish." }, { status: 400 })
+      return NextResponse.json({ error: "Artikel belum memiliki naskah markdown untuk dipublikasikan." }, { status: 400 })
     }
 
-    // 2. Fetch Medium User Details
-    const meRes = await fetch("https://api.medium.com/v1/me", {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      }
-    })
+    // Default tags if not provided
+    const tagsToUse = tags && tags.length > 0 
+      ? tags 
+      : ["book-review", "asikreview", "reading", "nonfiction"]
 
-    if (!meRes.ok) {
-      const err = await meRes.text()
-      console.error("Medium API /me Error:", err)
-      return NextResponse.json({ error: "Failed to authenticate with Medium. Check your integration token." }, { status: 500 })
-    }
-
-    const meData = await meRes.json()
-    const authorId = meData.data.id
-
-    // 3. Publish to Medium
-    const postPayload = {
+    // 2. Publish/Sync to Medium
+    const mediumPostUrl = await publishToMedium({
       title: article.title,
-      contentFormat: "markdown",
       content: article.markdownContent,
-      publishStatus: "draft"
-    }
-
-    const postRes = await fetch(`https://api.medium.com/v1/users/${authorId}/posts`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(postPayload)
+      token,
+      publishStatus: publishStatus || "draft",
+      tags: tagsToUse,
+      publicationId: publicationId || undefined,
+      canonicalUrl: canonicalUrl || undefined
     })
 
-    if (!postRes.ok) {
-      const err = await postRes.text()
-      console.error("Medium API /posts Error:", err)
-      return NextResponse.json({ error: "Failed to publish post to Medium." }, { status: 500 })
-    }
-
-    const postData = await postRes.json()
-    const mediumUrl = postData.data.url
-
-    // 4. Update Article in DB
+    // 3. Update Article in DB
     const updatedArticle = await prisma.article.update({
       where: { id: articleId },
       data: {
-        status: "PUBLISHED",
-        mediumUrl: mediumUrl,
+        status: publishStatus === "public" ? "PUBLISHED" : "READY",
+        mediumUrl: mediumPostUrl,
         publishedAt: new Date()
       }
     })
 
-    return NextResponse.json({ success: true, url: mediumUrl, article: updatedArticle })
+    return NextResponse.json({ 
+      success: true, 
+      url: mediumPostUrl, 
+      publishStatus,
+      article: updatedArticle 
+    })
 
   } catch (error: any) {
-    console.error("Medium Publish Error:", error)
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 })
+    console.error("Medium Publish/Sync Error:", error)
+    return NextResponse.json({ error: error.message || "Terjadi kesalahan internal saat sinkronisasi ke Medium." }, { status: 500 })
   }
 }
