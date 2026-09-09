@@ -29,6 +29,28 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  chattts:
+    build:
+      context: ./services/chattts
+      dockerfile: Dockerfile
+    container_name: asikreview-chattts
+    environment:
+      - PORT=8765
+      - CHATTTS_COMPILE=false
+    ports:
+      - "8765:8765"
+    volumes:
+      - chattts_cache:/root/.cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8765/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
 volumes:
   es_data:
     driver: local
+  chattts_cache:
+    driver: local
+

@@ -51,19 +51,35 @@ OPENAI_API_KEY="sk-proj-..."
 ELASTICSEARCH_URL="http://localhost:9200"
 ```
 
-### 4. Menjalankan Elasticsearch & Kibana (Docker Compose)
-Untuk mengaktifkan fitur **Knowledge Base & RAG PDF Book Indexing**, jalankan kontainer Elasticsearch secara lokal:
+### 4. Menjalankan ChatTTS Text-to-Speech Service
+Service ChatTTS dapat dijalankan dengan **dua mode**:
+
+#### Mode A: Python Script Langsung (Sangat Direkomendasikan untuk Debugging & Dev)
+Menjalankan langsung dengan Python host memberikan performa lebih cepat, live console logs, dan akses GPU native tanpa overhead container:
 ```bash
+# 1. Jalankan langsung service lokal di port 8765:
+npm run chattts:dev
+# Atau:
+cd services/chattts && python main.py
+
+# 2. Atau uji inferensi suara via CLI tanpa server:
+python services/chattts/cli_debug.py "Halo kawan! Selamat datang di AsikReview." --seed 2222
+```
+
+#### Mode B: Docker Compose (Isolated Container)
+```bash
+# Menjalankan Elasticsearch & Kibana:
 docker compose up -d
+
+# Menjalankan ChatTTS microservice via container (port 8765):
+docker compose up chattts -d
 ```
 *Layanan yang berjalan:*
 - **Elasticsearch**: [http://localhost:9200](http://localhost:9200) (Data tersimpan di volume `es_data`)
 - **Kibana** *(UI Manajemen Index)*: [http://localhost:5601](http://localhost:5601)
+- **ChatTTS Service**: [http://localhost:8765](http://localhost:8765) (Health check: `http://localhost:8765/health`)
 
-Untuk menghentikan kontainer:
-```bash
-docker compose down
-```
+
 
 ### 5. Menjalankan Migrasi & Seeder Database
 Inisialisasi tabel SQLite dan data contoh template banner:

@@ -7,8 +7,11 @@
     "build": "next build --webpack",
     "start": "next start -p 3300",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "chattts:dev": "python services/chattts/main.py",
+    "chattts:cli": "python services/chattts/cli_debug.py"
   },
+
   "dependencies": {
     "@elastic/elasticsearch": "^8.19.1",
     "@prisma/client": "^5.22.0",

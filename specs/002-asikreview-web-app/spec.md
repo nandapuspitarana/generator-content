@@ -50,10 +50,26 @@ Sebagai *developer*, saya ingin aplikasi menyertakan *System Prompt* baku di bal
 
 ---
 
+### User Story 4 - Konversi Skrip Podcast Menjadi Audio Melalui ChatTTS Microservice (Priority: P2)
+
+Sebagai seorang pembuat konten audio/podcast, saya ingin dapat langsung mengonversi naskah podcast (atau teks ulasan buku) menjadi file audio (`.wav`) menggunakan model AI generatif percakapan **ChatTTS**, sehingga saya bisa mendengarkan pratinjau audio secara lisan atau mengunduhnya langsung dari dashboard studio.
+
+**Why this priority**: Menghubungkan kemampuan teks LLM dengan sintesis suara percakapan berkualitas tinggi via model open-source ChatTTS, diisolasi dalam microservice Python FastAPI agar performa Next.js tidak terbebani oleh inferensi PyTorch.
+
+**Independent Test**: Kirimkan teks ke endpoint Next.js `/api/tts`, verifikasi bahwa permintaan diteruskan ke container ChatTTS microservice (`http://chattts:8765/synthesize`), dan menerima stream file audio WAV yang valid.
+
+**Acceptance Scenarios**:
+
+1. **Given** Naskah podcast tersedia di editor atau studio, **When** Pengguna menekan tombol "🔊 Synthesize Audio (ChatTTS)", **Then** Sistem mengirimkan request ke `/api/tts` dan memutar hasil audio player di browser atau menyediakan tombol download `.wav`.
+2. **Given** Microservice ChatTTS sedang offline atau tidak aktif, **When** Pengguna mencoba generate audio, **Then** Sistem memberikan pesan status yang informatif (HTTP 503) tanpa merusak atau membekukan UI editor.
+
+---
+
 ### Edge Cases
 
 - **Kegagalan API LLM / Timeout**: Bagaimana jika API (OpenAI/Gemini) sedang gangguan atau memakan waktu terlalu lama? (Aplikasi harus menangani *error* dengan baik, menghentikan animasi loading, dan menampilkan pesan *error* "Oops, AI sedang kelelahan. Coba lagi!" dengan opsi *retry*).
-- **Format Respons AI Tidak Terprediksi**: Bagaimana jika AI gagal memisahkan kode HTML dengan benar? (Aplikasi harus memiliki fungsi *parser* yang kokoh, misalnya mencari blok \`\`\`html, dan jika tidak ditemukan, menampilkan *fallback* desain banner *default*).
+- **Format Respons AI Tidak Terprediksi**: Bagaimana jika AI gagal memisahkan kode HTML dengan benar? (Aplikasi harus memiliki fungsi *parser* yang kokoh, misalnya mencari blok ```html, dan jika tidak ditemukan, menampilkan *fallback* desain banner *default*).
+- **ChatTTS Heavy Inference / Timeout**: Inferensi CPU model ChatTTS dapat memakan waktu 15–30 detik per kalimat panjang. Request dibatasi maksimal 5000 karakter dan rate-limited (5 req/menit per IP) untuk mencegah kehabisan memori server.
 
 ## Requirements *(mandatory)*
 
@@ -73,6 +89,8 @@ Sebagai *developer*, saya ingin aplikasi menyertakan *System Prompt* baku di bal
   - **Panel 1 (Banner Preview)**: Menampilkan hasil *render* aman dari kode HTML banner.
   - **Panel 2 (Markdown Editor/Viewer)**: Menampilkan dan me-render hasil ulasan 7 bagian.
 - **FR-007**: Aplikasi MUST memiliki penanganan *error* (*error handling*) yang mulus jika pemanggilan API gagal atau *timeout*.
+- **FR-008**: Sistem MUST menyediakan **ChatTTS microservice** independen (Python FastAPI, PyTorch) yang di-containerize via Docker Compose (`services/chattts`), mengekspos endpoint `/synthesize` dan `/health`.
+- **FR-009**: Next.js backend MUST menyediakan bridge API route `/api/tts` yang memvalidasi input via Zod, memberlakukan rate limiting, dan meneruskan permintaan sintesis ke ChatTTS microservice secara aman.
 
 ### Key Entities
 
@@ -80,6 +98,7 @@ Sebagai *developer*, saya ingin aplikasi menyertakan *System Prompt* baku di bal
 - **AsikReview Prompt**: String instruksi sistem rahasia yang disisipkan di level aplikasi.
 - **AI Response**: Hasil *raw string* dari LLM yang berisi HTML + Markdown.
 - **Parsed Result**: Objek hasil pemisahan (*parsing*) dari *AI Response*, memuat atribut `htmlBannerCode` dan `markdownContent`.
+- **TTS Request & Audio**: Input teks dialog yang dikonversi menjadi file audio WAV oleh ChatTTS microservice.
 
 ## Success Criteria *(mandatory)*
 
@@ -89,9 +108,12 @@ Sebagai *developer*, saya ingin aplikasi menyertakan *System Prompt* baku di bal
 - **SC-002**: Pengiriman *form* berhasil memicu animasi *loading* dan berujung pada transisi UI ke tampilan layar hasil (2 Panel).
 - **SC-003**: *Parser* aplikasi terbukti 100% mampu memisahkan blok kode HTML dari sisa teks Markdown yang diberikan oleh *mock* respons LLM.
 - **SC-004**: Tidak ada gangguan (*layout break*) saat me-render kode HTML maupun Markdown di antarmuka aplikasi.
+- **SC-005**: Endpoint `/api/tts` berhasil menghasilkan stream audio `audio/wav` jika service ChatTTS aktif, atau mengembalikan 503 dengan pesan ramah jika dinonaktifkan/offline.
 
 ## Assumptions
 
 - **A-001**: *Mock service* API sudah cukup untuk tahap awal pengembangan (*development*) guna memverifikasi alur UI/UX tanpa membuang kuota API berbayar.
 - **A-002**: Output HTML banner dari LLM akan dirancang menggunakan CDN Tailwind CSS (*utility classes* standar) sehingga aman di-*render* ke dalam penampung berskala *fluid* (misal: `<div dangerouslySetInnerHTML />` atau `iframe` *sandboxed*).
 - **A-003**: Aplikasi akan dibangun dengan React/Next.js sesuai panduan *constitution* proyek yang menekankan *Clean Architecture*.
+- **A-004**: Model ChatTTS dijalankan di container Python terpisah untuk mencegah beban memori/GPU berlebih pada runtime Node.js.
+

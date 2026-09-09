@@ -88,6 +88,26 @@
 
 ---
 
+## Phase 7: User Story 4 - ChatTTS Separated Service Integration (Priority: P2)
+
+**Goal**: Implement ChatTTS as an isolated Python FastAPI microservice, configure Docker Compose, and build Next.js API bridge & UI audio player.
+
+**Independent Test**: Start `chattts` service container, call `/api/tts` with text payload, receive valid WAV audio stream, and verify UI audio player controls.
+
+### Implementation for User Story 4
+
+- [X] T020 [US4] Create Python FastAPI microservice in `services/chattts/` (`main.py`, `requirements.txt`, `Dockerfile`, `.dockerignore`)
+- [X] T021 [US4] Add `chattts` service definition to `docker-compose.yml` with health check and persistent model volume
+- [X] T022 [US4] Define `TtsSynthesizeSchema` in `src/lib/validation/schemas.ts`
+- [X] T023 [US4] Create Next.js API route bridge in `src/app/api/tts/route.ts` with error handling, timeout, and SSRF protection
+- [X] T024 [US4] Configure rate limiting for `/api/tts` in `src/middleware.ts`
+- [X] T025 [US4] Build audio synthesizer and playback UI in `src/components/audio-player-modal.tsx` or studio editor
+- [X] T026 [US4] Update `.env.example` and documentation
+- [X] T027 [US4] Add automated unit test suite in `tests/unit/tts-api.test.ts`
+
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -96,11 +116,13 @@
 - **User Stories (Phase 3+)**: Depend on Foundational.
   - US1 and US2 can theoretically run in parallel, but US2's layout relies on the main page structure.
   - US3 depends on US1 (Form) and US2 (Panels) to properly render its integrated output.
+  - US4 (ChatTTS) connects to the podcast/article studio and operates independently as a microservice.
 
 ### Parallel Opportunities
 - Dependency installations and configuration (T002, T003).
 - Foundational Types and UI components (T005, T006).
 - Panel components (T010, T011) can be built in parallel with the LLM service stub (T013).
+- ChatTTS Python service (`services/chattts/`) can be constructed independently from Next.js UI.
 
 ## Implementation Strategy
 
@@ -110,3 +132,5 @@
 3. Build the Dual Panels (US2) using mock data.
 4. **STOP and VALIDATE**: Verify UI visually without real API calls.
 5. Integrate API logic (US3).
+6. Implement ChatTTS microservice & Next.js bridge (US4).
+

@@ -5,7 +5,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LiveBanner } from "@/components/live-banner"
 import { GenerateWorkflowButton } from "@/components/generate-workflow-button"
+import { AudioPlayerModal } from "@/components/audio-player-modal"
 import Link from "next/link"
+
 
 interface ArticleAsset {
   id: string
@@ -51,7 +53,9 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [notification, setNotification] = useState<{ type: "success" | "error", message: string } | null>(null)
   const [showMediumModal, setShowMediumModal] = useState(false)
+  const [showAudioModal, setShowAudioModal] = useState(false)
   const [mediumPublishStatus, setMediumPublishStatus] = useState<"draft" | "public">("draft")
+
   const [mediumTags, setMediumTags] = useState("book-review, asikreview, reading")
   const [isSyncingMedium, setIsSyncingMedium] = useState(false)
   const [currentMediumUrl, setCurrentMediumUrl] = useState<string | null>(initialArticle?.mediumUrl || null)
@@ -387,7 +391,33 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
             </div>
           )}
 
+          {/* ChatTTS Voice Synthesis Card */}
+          {initialArticle && initialArticle.markdownContent && (
+            <div className="p-4 bg-[#faf9f6] rounded-xl border border-[#e8e7e0] flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#191919] flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px] text-[#1a8917]">volume_up</span>
+                  ChatTTS Audio Synthesizer
+                </span>
+                <span className="text-[9px] font-mono uppercase bg-[#1a8917]/10 text-[#1a8917] px-1.5 py-0.5 rounded font-bold">
+                  2noise TTS
+                </span>
+              </div>
+              <p className="text-xs text-[#666666] leading-relaxed">
+                Sintesis naskah ini langsung menjadi file suara audio percakapan dengan AI ChatTTS.
+              </p>
+              <button 
+                onClick={() => setShowAudioModal(true)}
+                className="mt-1 w-full bg-[#191919] hover:bg-[#333333] text-white text-xs font-semibold py-2 rounded-lg transition-colors flex justify-center items-center gap-1.5 shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[14px]">graphic_eq</span>
+                Synthesize with ChatTTS
+              </button>
+            </div>
+          )}
+
           {/* Live Banner Medium (16:9) */}
+
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-bold text-[#191919]">
               <span>Medium Banner (16:9)</span>
@@ -622,6 +652,16 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
           </div>
         </div>
       )}
+
+
+      {/* ChatTTS Audio Synthesizer Modal */}
+      <AudioPlayerModal
+        isOpen={showAudioModal}
+        onClose={() => setShowAudioModal(false)}
+        initialText={markdownContent}
+        title={title ? `ChatTTS: ${title}` : "ChatTTS Audio Studio"}
+      />
     </div>
   )
 }
+

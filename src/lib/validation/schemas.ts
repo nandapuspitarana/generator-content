@@ -114,3 +114,18 @@ export const MediumBatchSyncSchema = z.object({
 });
 
 export type MediumBatchSyncInput = z.infer<typeof MediumBatchSyncSchema>;
+
+/**
+ * Zod validation schema for ChatTTS speech synthesis (/api/tts)
+ */
+export const TtsSynthesizeSchema = z.object({
+  text: z.string().min(1, "Teks untuk disintesis wajib diisi").max(5000, "Teks maksimal 5000 karakter"),
+  temperature: z.number().min(0.01).max(1.0).optional().default(0.3),
+  top_P: z.number().min(0.1).max(1.0).optional().default(0.7),
+  top_K: z.number().int().min(1).max(100).optional().default(20),
+  voice_seed: z.number().int().optional().default(2222),
+  speed: z.number().min(0.5).max(2.0).optional().default(1.0),
+});
+
+export type TtsSynthesizeInput = z.infer<typeof TtsSynthesizeSchema>;
+

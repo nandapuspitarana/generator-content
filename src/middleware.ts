@@ -58,10 +58,11 @@ export function middleware(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for")
   const clientIp = forwardedFor ? forwardedFor.split(",")[0].trim() : request.headers.get("x-real-ip") || "anonymous-client"
 
-  // Check if it's a high-cost generation or publishing route
+  // Check if it's a high-cost generation, TTS, or publishing route
   const isHighCostRoute =
     pathname.startsWith("/api/generate") ||
     pathname.startsWith("/api/podcast/generate") ||
+    pathname.startsWith("/api/tts") ||
     pathname.startsWith("/api/medium/publish") ||
     pathname.startsWith("/api/medium/batch-sync")
 
