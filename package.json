@@ -14,7 +14,10 @@
     "tts:extract": "python services/fish-speech/training/02_extract_vq.py",
     "tts:proto": "python services/fish-speech/training/03_build_proto.py",
     "tts:merge": "python services/fish-speech/training/05_merge_and_test.py",
-    "chattts:dev": "python services/fish-speech/main.py"
+    "chattts:dev": "python services/fish-speech/main.py",
+    "dev:all": "python run.py",
+    "stop": "python run.py stop",
+    "status": "python run.py status"
   },
 
   "dependencies": {

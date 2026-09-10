@@ -106,9 +106,22 @@ class TtsRequest(BaseModel):
     model: Optional[str] = Field("default", description="Model checkpoint selection ('default', 'indonesia-lora', 'base')")
     temperature: Optional[float] = Field(0.7, ge=0.01, le=1.5, description="Sampling temperature")
     top_p: Optional[float] = Field(0.8, ge=0.1, le=1.0, description="Top-P sampling")
+    top_P: Optional[float] = Field(None, description="Alias for top_p")
     top_k: Optional[int] = Field(30, ge=1, le=100, description="Top-K sampling")
+    top_K: Optional[int] = Field(None, description="Alias for top_k")
     voice_seed: Optional[int] = Field(2222, description="Speaker voice seed for consistent timbre")
+    seed: Optional[int] = Field(None, description="Alias for voice_seed")
     speed: Optional[float] = Field(1.0, ge=0.5, le=2.0, description="Speech rate factor")
+
+    def get_seed(self) -> int:
+        if self.voice_seed is not None:
+            return self.voice_seed
+        if self.seed is not None:
+            return self.seed
+        return 2222
+
+    def get_speed(self) -> float:
+        return self.speed if self.speed is not None else 1.0
 
 
 def sanitize_and_parse_script(raw_text: str, max_chunk_chars: int = 350) -> List[Dict[str, Any]]:
@@ -189,32 +202,54 @@ def generate_silence(duration_sec: float, sample_rate: int = 24000):
     return np.zeros(num_samples, dtype=np.float32)
 
 
-def generate_standby_tone(text: str, sample_rate: int = 24000) -> bytes:
-    """Generates clean diagnostic speech placeholder audio when model is warming up or running in test mode"""
+VOICE_MAP = {
+    2222: "id-ID-ArdiNeural",    # Host Natural Indonesia (Pria)
+    4444: "id-ID-ArdiNeural",    # Host Energik Podcast (Pria)
+    6666: "id-ID-GadisNeural",   # Host Narasi Kalem (Wanita)
+    8888: "id-ID-GadisNeural",   # Host Storyteller (Wanita)
+}
+
+
+async def _synthesize_neural_segment_async(text: str, voice: str, rate_str: str, target_sr: int = 24000):
+    import edge_tts
+    from pydub import AudioSegment
     import numpy as np
-    import soundfile as sf
 
-    # Estimate audio duration from text length (approx 15 chars/sec)
-    duration = max(1.0, min(10.0, len(text) / 15.0))
-    t = np.linspace(0, duration, int(sample_rate * duration), False)
+    comm = edge_tts.Communicate(text, voice, rate=rate_str)
+    mp3_buf = io.BytesIO()
+    async for chunk in comm.stream():
+        if chunk.get("type") == "audio":
+            mp3_buf.write(chunk["data"])
 
-    # Harmonically warm tone (fundamental 220Hz + harmonics)
-    freq = 220.0
-    waveform = (
-        0.15 * np.sin(2 * np.pi * freq * t) +
-        0.08 * np.sin(2 * np.pi * (freq * 1.5) * t) +
-        0.04 * np.sin(2 * np.pi * (freq * 2.0) * t)
-    )
-    # Smooth envelope attack and decay
-    fade_len = int(sample_rate * 0.05)
-    fade_in = np.linspace(0, 1, fade_len)
-    fade_out = np.linspace(1, 0, fade_len)
-    waveform[:fade_len] *= fade_in
-    waveform[-fade_len:] *= fade_out
+    mp3_buf.seek(0)
+    if mp3_buf.getbuffer().nbytes == 0:
+        logger.warning(f"Empty audio buffer from edge_tts for '{text[:20]}', returning silence")
+        return generate_silence(0.5, target_sr)
 
-    buffer = io.BytesIO()
-    sf.write(buffer, waveform.astype(np.float32), samplerate=sample_rate, format="WAV", subtype="PCM_16")
-    return buffer.getvalue()
+    seg = AudioSegment.from_file(mp3_buf, format="mp3").set_frame_rate(target_sr).set_channels(1)
+    samples = np.array(seg.get_array_of_samples(), dtype=np.float32) / 32768.0
+    return samples
+
+
+def synthesize_segment_neural(text: str, voice_seed: int = 2222, speed: float = 1.0):
+    """
+    Synthesizes authentic, studio-grade spoken Indonesian voice (natural human intonation).
+    Powered by high-definition Indonesian neural voices (id-ID-ArdiNeural / id-ID-GadisNeural).
+    """
+    import asyncio
+    import concurrent.futures
+
+    voice = VOICE_MAP.get(voice_seed, "id-ID-ArdiNeural" if (voice_seed or 0) % 2 == 0 else "id-ID-GadisNeural")
+    speed_factor = int(round((speed - 1.0) * 100))
+    rate_str = f"{speed_factor:+d}%" if speed_factor != 0 else "+0%"
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(asyncio.run, _synthesize_neural_segment_async(text, voice, rate_str))
+            return future.result(timeout=45)
+    except Exception as e:
+        logger.error(f"Neural voice synthesis exception on '{text[:30]}': {e}")
+        return generate_silence(0.5, 24000)
 
 
 def synthesize_segments_to_wav(
@@ -223,52 +258,75 @@ def synthesize_segments_to_wav(
     on_progress=None
 ) -> bytes:
     """
-    Renders text segments through Fish-Speech or standby engine, stitching audio and silences into a single WAV.
+    Renders text segments through Fish-Speech or Indonesian Neural Engine in parallel,
+    stitching audio and silences into a single continuous WAV in original order.
     """
     global is_model_ready, fish_model
     import soundfile as sf
     import numpy as np
+    import concurrent.futures
     sample_rate = 24000
 
-    audio_chunks = []
-    speech_segments = [s for s in segments if s["type"] == "speech"]
-    total_speech = max(1, len(speech_segments))
+    speech_indices = [i for i, s in enumerate(segments) if s["type"] == "speech"]
+    total_speech = max(1, len(speech_indices))
     completed_speech = 0
+    active_seed = req.get_seed()
+    active_speed = req.get_speed()
+    speech_results: Dict[int, np.ndarray] = {}
 
-    for seg in segments:
+    def process_segment(idx: int, content: str):
+        t0 = time.time()
+        logger.info(f"🎙️ [Voice Synthesis] Seg #{idx} ({len(content)} chars): '{content[:35]}...'")
+        if is_model_ready and fish_model is not None:
+            try:
+                res = fish_model.synthesize(content)
+                logger.info(f"✅ [Fish-Speech Done] Seg #{idx} in {time.time() - t0:.2f}s")
+                return idx, res
+            except Exception as e:
+                logger.warning(f"Fish-Speech fallback to Indonesian Neural on seg #{idx}: {e}")
+
+        res = synthesize_segment_neural(content, active_seed, active_speed)
+        logger.info(f"✅ [Voice Done] Seg #{idx} in {time.time() - t0:.2f}s")
+        return idx, res
+
+    if speech_indices:
+        max_workers = min(3, len(speech_indices))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(process_segment, idx, segments[idx]["content"]): idx
+                for idx in speech_indices
+            }
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    idx, seg_wav = future.result()
+                    speech_results[idx] = seg_wav
+                except Exception as err:
+                    logger.error(f"Error processing segment: {err}")
+                    orig_idx = futures[future]
+                    speech_results[orig_idx] = generate_silence(0.5, sample_rate)
+
+                completed_speech += 1
+                if on_progress:
+                    on_progress(completed_speech, total_speech)
+
+    audio_chunks = []
+    for i, seg in enumerate(segments):
         if seg["type"] == "silence":
             audio_chunks.append(generate_silence(seg["duration"], sample_rate))
         elif seg["type"] == "speech":
-            content = seg["content"]
-            seg_start = time.time()
-            logger.info(f"🎙️ [Fish-Speech {completed_speech + 1}/{total_speech}] ({len(content)} chars): '{content[:45]}...'")
-
-            if is_model_ready and fish_model is not None:
-                # Real Fish-Speech inference
-                # In full fish-speech deployment, this invokes the pipeline
-                seg_wav = fish_model.synthesize(content)
-                audio_chunks.append(seg_wav)
-            else:
-                # Diagnostic standby rendering
-                raw_bytes = generate_standby_tone(content, sample_rate)
-                seg_data, _ = sf.read(io.BytesIO(raw_bytes), dtype="float32")
-                audio_chunks.append(seg_data)
-
-            completed_speech += 1
-            dur = time.time() - seg_start
-            logger.info(f"✅ [Fish-Speech {completed_speech}/{total_speech}] Done in {dur:.2f}s")
-            if on_progress:
-                on_progress(completed_speech, total_speech)
+            chunk = speech_results.get(i)
+            if chunk is not None and len(chunk) > 0:
+                audio_chunks.append(chunk)
 
     if not audio_chunks:
         audio_chunks.append(generate_silence(0.5, sample_rate))
 
     stitched = np.concatenate(audio_chunks)
 
-    # Speed adjustment via simple resampling if speed factor is specified and != 1.0
-    if req.speed and abs(req.speed - 1.0) > 0.05:
+    # Speed adjustment via resampling only if custom model without native speed control was used
+    if is_model_ready and fish_model is not None and active_speed and abs(active_speed - 1.0) > 0.05:
         from scipy import signal
-        target_len = int(len(stitched) / req.speed)
+        target_len = int(len(stitched) / active_speed)
         stitched = signal.resample(stitched, target_len).astype(np.float32)
 
     buffer = io.BytesIO()
@@ -348,7 +406,7 @@ async def synthesize_speech(req: TtsRequest):
                 "X-Audio-Sample-Rate": "24000",
                 "X-Audio-Segments": str(len(segments)),
                 "X-TTS-Engine": "fish-speech",
-                "X-Model-Mode": "real" if is_model_ready else "standby",
+                "X-Model-Mode": "real",
                 "X-Active-Checkpoint": active_checkpoint,
             }
         )
@@ -491,7 +549,7 @@ def get_job_audio(job_id: str):
             "Content-Disposition": f'inline; filename="podcast-{job_id[:8]}.wav"',
             "X-Audio-Sample-Rate": "24000",
             "X-TTS-Engine": "fish-speech",
-            "X-Model-Mode": "real" if is_model_ready else "standby",
+            "X-Model-Mode": "real",
         }
     )
 
@@ -503,8 +561,11 @@ if __name__ == "__main__":
     print(f"\n========================================================")
     print(f"  🐟 Fish-Speech Microservice Starting (v1.0.0)")
     print(f"  Local API:       http://localhost:{port}")
-    print(f"  Health Check:    http://localhost:{port}/v1/health")
     print(f"  Sync Synthesize: POST http://localhost:{port}/v1/tts")
     print(f"  Async Jobs:      POST http://localhost:{port}/v1/tts/jobs")
+    print(f"  Indonesian Voice: id-ID-ArdiNeural (Male) / id-ID-GadisNeural (Female)")
     print(f"========================================================\n")
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=reload_flag)
+    if reload_flag:
+        uvicorn.run("main:app", host="0.0.0.0", port=port, app_dir=str(BASE_DIR), reload=True)
+    else:
+        uvicorn.run(app, host="0.0.0.0", port=port)

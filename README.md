@@ -51,19 +51,23 @@ OPENAI_API_KEY="sk-proj-..."
 ELASTICSEARCH_URL="http://localhost:9200"
 ```
 
-### 4. Menjalankan ChatTTS Text-to-Speech Service
-Service ChatTTS dapat dijalankan dengan **dua mode**:
+### 4. Menjalankan Layanan (Auto-Run & Auto-Stop)
+Anda dapat menjalankan seluruh stack (Web Frontend + TTS Backend) hanya dengan **1 perintah**:
 
-#### Mode A: Python Script Langsung (Sangat Direkomendasikan untuk Debugging & Dev)
-Menjalankan langsung dengan Python host memberikan performa lebih cepat, live console logs, dan akses GPU native tanpa overhead container:
 ```bash
-# 1. Jalankan langsung service lokal di port 8765:
-npm run chattts:dev
+# Jalankan seluruh stack (Web 3300 + Fish-Speech TTS 8765):
+npm run dev:all
 # Atau:
-cd services/chattts && python main.py
+python run.py
+# Atau (di Windows CMD):
+run.bat
 
-# 2. Atau uji inferensi suara via CLI tanpa server:
-python services/chattts/cli_debug.py "Halo kawan! Selamat datang di AsikReview." --seed 2222
+# Tekan [Ctrl + C] kapan saja: Sistem otomatis mematikan SEMUA proses & membersihkan port.
+
+# Perintah kontrol lainnya:
+npm run stop      # Hentikan semua proses & bersihkan port 8765 dan 3300
+npm run status    # Cek status kesehatan kedua layanan
+python run.py tts # Jalankan hanya service TTS saja
 ```
 
 #### Mode B: Docker Compose (Isolated Container)
