@@ -402,7 +402,11 @@ Struktur Skrip yang WAJIB diikuti:
 
 Format penulisan skrip:
 - Gunakan penanda HOST: untuk setiap bagian ucapan.
-- Gunakan kurung siku untuk keterangan teknis audio, misalnya: [MUSIK INTRO FADE OUT], [JEDA SINGKAT].
+- Selipkan tag ekspresi vokal dan akustik alami (34 Vocal Tags) pada tempat-tempat yang tepat:
+  - Jeda & Napas: [pause], [short pause], [inhale], [exhale], [sigh], [clearing throat], [panting], [tsk]
+  - Tawa & Ceria: [laughing], [chuckle], [chuckling], [laughing tone], [delight], [audience laughter]
+  - Dinamika Suara: [emphasis], [whisper], [low voice], [low volume], [volume down], [loud], [volume up], [screaming], [shouting]
+  - Emosi & Mood: [excited], [excited tone], [surprised], [shocked], [angry], [sad], [singing], [echo], [interrupting], [moaning], [with strong accent]
 - Tulis dalam format Markdown.`;
 
   const userPrompt = `Judul Topik: ${tag.title}

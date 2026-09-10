@@ -37,15 +37,107 @@ export async function GET(request?: NextRequest): Promise<NextResponse> {
 
   let jobId: string | null = null;
   let wantsAudio = false;
+  let wantsModels = false;
 
   if (request?.url) {
     try {
       const { searchParams } = new URL(request.url);
       jobId = searchParams.get("jobId");
       wantsAudio = searchParams.get("audio") === "true";
+      wantsModels = searchParams.get("models") === "true";
     } catch {
       // Ignored if URL cannot be parsed
     }
+  }
+
+  // Handle Models & Voices Query
+  if (wantsModels) {
+    try {
+      const res = await fetch(`${serviceUrl}/models`, {
+        headers: { Accept: "application/json" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return NextResponse.json(data);
+      }
+    } catch (err: any) {
+      console.warn("Could not fetch models from TTS service:", err);
+    }
+    // Return standard fallback models if microservice has not yet refreshed /models route
+    return NextResponse.json({
+      active_checkpoint: "standby-neural",
+      checkpoints: [
+        {
+          id: "indonesia-lora",
+          name: "Indonesia Fine-Tuned (X-Lord Dataset LoRA)",
+          description: "Trained on 16.4 hours of Indonesian speech dataset for natural local intonation.",
+          is_ready: false,
+          recommended: true,
+        },
+        {
+          id: "standby-neural",
+          name: "High-Definition Indonesian Neural Engine",
+          description: "Studio-grade neural voice synthesis engine tuned for Indonesian podcast & narration.",
+          is_ready: true,
+          recommended: true,
+        },
+        {
+          id: "default",
+          name: "Base Model (Fish-Speech openaudio-s1-mini)",
+          description: "Multilingual foundation model supporting zero-shot cloning.",
+          is_ready: false,
+          recommended: false,
+        },
+      ],
+      voices: [
+        {
+          seed: 2222,
+          name: "Host Natural Indonesia (Pria)",
+          gender: "male",
+          style: "Casual, Hangat & Percakapan",
+          default_speed: 1.0,
+          voice_id: "id-ID-ArdiNeural",
+        },
+        {
+          seed: 4444,
+          name: "Host Energik Podcast (Pria)",
+          gender: "male",
+          style: "Dynamic, Upbeat & Review Produk",
+          default_speed: 1.05,
+          voice_id: "id-ID-ArdiNeural",
+        },
+        {
+          seed: 6666,
+          name: "Host Narasi Kalem (Wanita)",
+          gender: "female",
+          style: "Calm, Jelas & Edukasi",
+          default_speed: 1.0,
+          voice_id: "id-ID-GadisNeural",
+        },
+        {
+          seed: 8888,
+          name: "Host Storyteller Deep (Wanita)",
+          gender: "female",
+          style: "Dramatic & Storytelling Mendalam",
+          default_speed: 0.95,
+          voice_id: "id-ID-GadisNeural",
+        },
+      ],
+      default_paragraph_delay: 1.0,
+      supported_tags: [
+        '<break time="0.5s"/>',
+        '<break time="1s"/>',
+        '<break time="1.5s"/>',
+        '<break time="2s"/>',
+      ],
+      supported_vocal_tags: [
+        "[pause]", "[emphasis]", "[laughing]", "[inhale]", "[chuckle]", "[tsk]", "[singing]", "[excited]",
+        "[laughing tone]", "[interrupting]", "[chuckling]", "[excited tone]", "[volume up]", "[echo]",
+        "[angry]", "[low volume]", "[sigh]", "[low voice]", "[whisper]", "[screaming]", "[shouting]",
+        "[loud]", "[surprised]", "[short pause]", "[exhale]", "[delight]", "[panting]", "[audience laughter]",
+        "[with strong accent]", "[volume down]", "[clearing throat]", "[sad]", "[moaning]", "[shocked]"
+      ],
+    });
   }
 
   // Handle Job Polling & Retrieval
@@ -176,7 +268,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { text, reference_audio, reference_text, model, temperature, top_P, top_K, voice_seed, speed } = parseResult.data;
+  const { text, reference_audio, reference_text, model, temperature, top_P, top_K, voice_seed, speed, paragraph_delay } = parseResult.data;
   const serviceUrl = getServiceUrl();
 
   // Security sanitization: strip dangerous HTML/script tags before sending to Python
@@ -204,6 +296,7 @@ export async function POST(request: NextRequest) {
           top_K,
           voice_seed,
           speed,
+          paragraph_delay,
         }),
       });
 
@@ -255,6 +348,7 @@ export async function POST(request: NextRequest) {
         top_K,
         voice_seed,
         speed,
+        paragraph_delay,
       }),
       signal: controller.signal,
     });

@@ -391,27 +391,27 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
             </div>
           )}
 
-          {/* ChatTTS Voice Synthesis Card */}
+          {/* Fish-Speech Voice Synthesis Card */}
           {initialArticle && initialArticle.markdownContent && (
             <div className="p-4 bg-[#faf9f6] rounded-xl border border-[#e8e7e0] flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#191919] flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-[#1a8917]">volume_up</span>
-                  ChatTTS Audio Synthesizer
+                  <span className="material-symbols-outlined text-[16px] text-[#0066cc]">volume_up</span>
+                  Fish-Speech Studio (Bahasa Indonesia)
                 </span>
-                <span className="text-[9px] font-mono uppercase bg-[#1a8917]/10 text-[#1a8917] px-1.5 py-0.5 rounded font-bold">
-                  2noise TTS
+                <span className="text-[9px] font-mono uppercase bg-[#0066cc]/10 text-[#0066cc] px-1.5 py-0.5 rounded font-bold">
+                  Fish-Speech V1.5
                 </span>
               </div>
               <p className="text-xs text-[#666666] leading-relaxed">
-                Sintesis naskah ini langsung menjadi file suara audio percakapan dengan AI ChatTTS.
+                Sintesis naskah ini langsung menjadi file suara audio percakapan dengan AI Fish-Speech & Indonesian Neural Engine.
               </p>
               <button 
                 onClick={() => setShowAudioModal(true)}
-                className="mt-1 w-full bg-[#191919] hover:bg-[#333333] text-white text-xs font-semibold py-2 rounded-lg transition-colors flex justify-center items-center gap-1.5 shadow-xs"
+                className="mt-1 w-full bg-[#191919] hover:bg-[#333333] text-white text-xs font-semibold py-2 rounded-lg transition-colors flex justify-center items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[14px]">graphic_eq</span>
-                Synthesize with ChatTTS
+                Synthesize with Fish-Speech
               </button>
             </div>
           )}
@@ -654,12 +654,12 @@ export function ArticleEditor({ initialArticle }: { initialArticle?: Article }) 
       )}
 
 
-      {/* ChatTTS Audio Synthesizer Modal */}
+      {/* Fish-Speech Audio Synthesizer Modal */}
       <AudioPlayerModal
         isOpen={showAudioModal}
         onClose={() => setShowAudioModal(false)}
         initialText={markdownContent}
-        title={title ? `ChatTTS: ${title}` : "ChatTTS Audio Studio"}
+        title={title ? `Fish-Speech Studio: ${title}` : "Fish-Speech Studio (Bahasa Indonesia)"}
       />
     </div>
   )

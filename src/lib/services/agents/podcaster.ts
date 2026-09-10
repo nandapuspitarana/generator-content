@@ -41,14 +41,18 @@ Tulis dalam format teks biasa (plain text), jangan gunakan markdown (**).`;
 
 async function runEditor(topic: string, draft: string, apiKey: string): Promise<string> {
   const systemPrompt = `Kamu adalah Agen Editor Naskah Podcast Profesional.
-Tugasmu adalah memoles draft kasar segmen podcast tentang "${topic}" menjadi naskah yang sangat asik didengar, mengalir (conversational), dan enak dibaca oleh pengisi suara.
+Tugasmu adalah memoles draft kasar segmen podcast tentang "${topic}" menjadi naskah yang sangat asik didengar, mengalir (conversational), dan enak dibaca oleh pengisi suara AI Fish-Speech.
 Aturan:
 1. Ubah bahasa yang terlalu kaku menjadi gaya bahasa lisan (storytelling) yang natural dan engaging.
 2. JANGAN tambahkan sapaan pembuka (intro) atau penutup (outro). Tetap jadikan ini segmen isi (body).
 3. HANYA Teks Murni (Plain Text). JANGAN gunakan Markdown (jangan ada **bold** atau # heading).
-4. Gunakan tag SSML <break time="1s"/> atau <break time="1.5s"/> di antara poin penting agar ada jeda natural saat dibacakan.`;
+4. Sisipkan tag jeda dan ekspresi vokal alami (34 Vocal Tags) pada tempat-tempat yang tepat:
+   - Jeda & Napas: [pause], [short pause], [inhale], [exhale], [sigh], [clearing throat], [panting], [tsk], atau <break time="1s"/>
+   - Tawa & Ceria: [laughing], [chuckle], [chuckling], [laughing tone], [delight], [audience laughter]
+   - Dinamika Suara: [emphasis], [whisper], [low voice], [low volume], [volume down], [loud], [volume up], [screaming], [shouting]
+   - Emosi & Karakter: [excited], [excited tone], [surprised], [shocked], [angry], [sad], [singing], [echo], [interrupting], [moaning], [with strong accent]`;
 
-  const userPrompt = `Draft Segmen Kasar:\n\n${draft}\n\nTolong edit dan perbaiki naskah ini agar lebih asik didengar (lisan) dan tambahkan tag jeda SSML yang tepat.`;
+  const userPrompt = `Draft Segmen Kasar:\n\n${draft}\n\nTolong edit dan perbaiki naskah ini agar lebih asik didengar (lisan) dan tambahkan tag jeda serta ekspresi vokal yang tepat.`;
 
   return await callOpenAI("gpt-4o-mini", systemPrompt, userPrompt, apiKey);
 }
@@ -71,14 +75,15 @@ Instruksi Panjang Naskah: Target panjang naskah akhir adalah ${length.toUpperCas
 - LONG: ~1800 kata
 Sesuaikan elaborasi dan kecepatan alur cerita untuk mencapai target durasi ini sebaik mungkin.
 
-Aturan Format (SANGAT PENTING - ElevenLabs Compatible):
-1. Hasil akhir HARUS berupa Teks Murni (Plain Text) yang langsung siap dibacakan oleh mesin Text-to-Speech (seperti ElevenLabs).
+Aturan Format (SANGAT PENTING - Fish-Speech & Studio Audio Ready):
+1. Hasil akhir HARUS berupa Teks Murni (Plain Text) yang langsung siap dibacakan oleh mesin Text-to-Speech (Fish-Speech Studio).
 2. JANGAN gunakan format Markdown (jangan gunakan **bold**, *italic*, atau # heading).
-3. JANGAN tuliskan instruksi panggung atau nama pembicara (seperti "Host:", "[Tarik Napas]").
-4. WAJIB sisipkan jeda antar kalimat/paragraf dengan tag SSML:
-   - <break time="1s"/> untuk jeda standar.
-   - <break time="1.5s"/> untuk transisi ide.
-   - <break time="2s"/> untuk jeda dramatis di Intro/Outro.`;
+3. JANGAN tuliskan label pembicara seperti "Host:". Langsung tuliskan naskah lisan.
+4. Manfaatkan tag ekspresi vokal dan jeda alami secara proporsional untuk menghidupkan percakapan:
+   - Jeda & Napas: [pause] (1s), [short pause] (0.5s), [inhale], [exhale], [sigh], [clearing throat], [panting], [tsk], atau <break time="1s"/>, <break time="1.5s"/>, <break time="2s"/>
+   - Tawa & Respon: [laughing], [chuckle], [chuckling], [laughing tone], [delight], [audience laughter]
+   - Dinamika Suara: [emphasis], [whisper], [low voice], [low volume], [volume down], [loud], [volume up], [screaming], [shouting]
+   - Emosi & Mood: [excited], [excited tone], [surprised], [shocked], [angry], [sad], [singing], [echo], [interrupting], [moaning], [with strong accent]`;
 
   const combinedSegments = segments.map((seg, i) => `--- SEGMEN ${i + 1} ---\n${seg}`).join("\n\n");
 

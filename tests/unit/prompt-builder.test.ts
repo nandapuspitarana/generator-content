@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { buildBannerPrompt, buildInstagramCaptionPrompt, buildInstagramCarouselPrompt, buildPrompt } from "@/lib/utils/promptBuilder";
+import {
+  buildBannerPrompt,
+  buildInstagramCaptionPrompt,
+  buildInstagramCarouselPrompt,
+  buildPodcastScriptPrompt,
+  buildPrompt,
+  VOCAL_EXPRESSION_TAGS,
+} from "@/lib/utils/promptBuilder";
 import { KnowledgeTag, KnowledgeChapter } from "@/lib/types/models";
 
 describe("Prompt Builder Utilities", () => {
@@ -88,6 +95,32 @@ describe("Prompt Builder Utilities", () => {
     expect(prompt).toContain("Atomic Habits");
   });
 
+  it("should verify VOCAL_EXPRESSION_TAGS contains all 34 required vocal expression tags", () => {
+    expect(VOCAL_EXPRESSION_TAGS).toHaveLength(34);
+    const tagList = VOCAL_EXPRESSION_TAGS.map((t) => t.tag);
+
+    const requiredTags = [
+      "[pause]", "[emphasis]", "[laughing]", "[inhale]", "[chuckle]", "[tsk]", "[singing]", "[excited]",
+      "[laughing tone]", "[interrupting]", "[chuckling]", "[excited tone]", "[volume up]", "[echo]",
+      "[angry]", "[low volume]", "[sigh]", "[low voice]", "[whisper]", "[screaming]", "[shouting]",
+      "[loud]", "[surprised]", "[short pause]", "[exhale]", "[delight]", "[panting]", "[audience laughter]",
+      "[with strong accent]", "[volume down]", "[clearing throat]", "[sad]", "[moaning]", "[shocked]",
+    ];
+
+    requiredTags.forEach((tag) => {
+      expect(tagList).toContain(tag);
+    });
+  });
+
+  it("should build podcast script prompt with vocal tags instructions", () => {
+    const prompt = buildPodcastScriptPrompt(mockTag, mockChapters, "gpt");
+    expect(prompt).toContain("Atomic Habits");
+    expect(prompt).toContain("[pause]");
+    expect(prompt).toContain("[laughing]");
+    expect(prompt).toContain("[whisper]");
+    expect(prompt).toContain("[excited]");
+  });
+
   it("should correctly route through buildPrompt dispatcher", () => {
     const banner = buildPrompt("banner", mockTag, mockChapters, "gpt");
     expect(banner).toContain("16:9");
@@ -97,6 +130,9 @@ describe("Prompt Builder Utilities", () => {
 
     const carousel = buildPrompt("ig-carousel", mockTag, mockChapters, "gpt");
     expect(carousel).toContain("Slide 1");
+
+    const podcast = buildPrompt("podcast-script", mockTag, mockChapters, "gpt");
+    expect(podcast).toContain("[pause]");
 
     // Unknown type returns empty string
     const unknown = buildPrompt("unknown" as any, mockTag, mockChapters, "gpt");

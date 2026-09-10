@@ -112,27 +112,84 @@ class TtsRequest(BaseModel):
     voice_seed: Optional[int] = Field(2222, description="Speaker voice seed for consistent timbre")
     seed: Optional[int] = Field(None, description="Alias for voice_seed")
     speed: Optional[float] = Field(1.0, ge=0.5, le=2.0, description="Speech rate factor")
+    paragraph_delay: Optional[float] = Field(1.0, ge=0.0, le=5.0, description="Pause duration in seconds between paragraphs")
 
     def get_seed(self) -> int:
-        if self.voice_seed is not None:
-            return self.voice_seed
         if self.seed is not None:
             return self.seed
+        if self.voice_seed is not None:
+            return self.voice_seed
         return 2222
+
+    def get_top_p(self) -> float:
+        if self.top_P is not None:
+            return self.top_P
+        return self.top_p if self.top_p is not None else 0.8
+
+    def get_top_k(self) -> int:
+        if self.top_K is not None:
+            return self.top_K
+        return self.top_k if self.top_k is not None else 30
 
     def get_speed(self) -> float:
         return self.speed if self.speed is not None else 1.0
 
+    def get_paragraph_delay(self) -> float:
+        return self.paragraph_delay if self.paragraph_delay is not None else 1.0
 
-def sanitize_and_parse_script(raw_text: str, max_chunk_chars: int = 350) -> List[Dict[str, Any]]:
+
+# 34 Vocal Expression & Timing Tags supported across Content Generation & Fish-Speech
+VOCAL_TAG_BREAKS = {
+    r'\[pause\]': ' <break time="1.0s"/> ',
+    r'\[short pause\]': ' <break time="0.5s"/> ',
+    r'\[sigh\]': ' <break time="0.4s"/> ',
+    r'\[inhale\]': ' <break time="0.3s"/> ',
+    r'\[exhale\]': ' <break time="0.3s"/> ',
+    r'\[clearing throat\]': ' <break time="0.4s"/> ',
+    r'\[panting\]': ' <break time="0.4s"/> ',
+    r'\[tsk\]': ' <break time="0.3s"/> ',
+    r'\[audience laughter\]': ' <break time="0.8s"/> ',
+    r'\[laughing\]': ' <break time="0.5s"/> ',
+    r'\[chuckle\]': ' <break time="0.4s"/> ',
+    r'\[chuckling\]': ' <break time="0.4s"/> ',
+}
+
+ALL_VOCAL_TAGS = [
+    "[pause]", "[emphasis]", "[laughing]", "[inhale]", "[chuckle]", "[tsk]", "[singing]", "[excited]",
+    "[laughing tone]", "[interrupting]", "[chuckling]", "[excited tone]", "[volume up]", "[echo]",
+    "[angry]", "[low volume]", "[sigh]", "[low voice]", "[whisper]", "[screaming]", "[shouting]",
+    "[loud]", "[surprised]", "[short pause]", "[exhale]", "[delight]", "[panting]", "[audience laughter]",
+    "[with strong accent]", "[volume down]", "[clearing throat]", "[sad]", "[moaning]", "[shocked]"
+]
+
+VOCAL_TAGS_REGEX = re.compile(
+    r'\[(pause|emphasis|laughing|inhale|chuckle|tsk|singing|excited|laughing tone|interrupting|'
+    r'chuckling|excited tone|volume up|echo|angry|low volume|sigh|low voice|whisper|screaming|'
+    r'shouting|loud|surprised|short pause|exhale|delight|panting|audience laughter|with strong accent|'
+    r'volume down|clearing throat|sad|moaning|shocked)\]',
+    re.IGNORECASE
+)
+
+
+def sanitize_and_parse_script(raw_text: str, max_chunk_chars: int = 400, paragraph_delay: float = 1.0) -> List[Dict[str, Any]]:
     """
-    Parses speech script:
-    1. Strips dangerous HTML / script tags.
-    2. Extracts SSML <break time="..."/> with safety duration clamping (0.05s to 5.0s).
-    3. Chunks paragraphs on sentence boundaries to preserve natural flow and avoid token limits.
+    1. Strips harmful HTML scripts while preserving SSML <break time="..."/> tags.
+    2. Maps 34 vocal expression tags ([pause], [whisper], [laughing], etc.) into audio breaks or prosodic cues.
+    3. Inserts natural breathing pause between paragraphs if paragraph_delay > 0.
+    4. Extracts SSML <break time="..."/> with safety duration clamping (0.05s to 5.0s).
+    5. Chunks paragraphs on sentence boundaries to preserve natural flow and avoid token limits.
     """
     sanitized = re.sub(r'<(script|iframe|object|embed|style)[^>]*>.*?</\1>', '', raw_text, flags=re.IGNORECASE | re.DOTALL)
     sanitized = re.sub(r'javascript:', '', sanitized, flags=re.IGNORECASE)
+
+    # Auto-insert paragraph pauses if specified and not already explicit
+    if paragraph_delay and paragraph_delay >= 0.1:
+        clamped_delay = max(0.1, min(5.0, paragraph_delay))
+        sanitized = re.sub(r'\n\s*\n', f' <break time="{clamped_delay:.1f}s"/> ', sanitized)
+
+    # Map vocal pause tags into SSML break tags
+    for tag_pattern, break_markup in VOCAL_TAG_BREAKS.items():
+        sanitized = re.sub(tag_pattern, break_markup, sanitized, flags=re.IGNORECASE)
 
     break_pattern = re.compile(r'<break\s+time=["\']?([0-9.]+)(m?s)?["\']?\s*/?>', re.IGNORECASE)
 
@@ -167,7 +224,37 @@ def sanitize_and_parse_script(raw_text: str, max_chunk_chars: int = 350) -> List
             final_segments.append(seg)
             continue
 
-        content = seg["content"]
+        raw_content = seg["content"]
+
+        # Detect vocal prosody & emotion modifiers in this segment
+        volume_mod = "+0%"
+        pitch_mod = "+0Hz"
+        rate_bonus = 0
+
+        lower_raw = raw_content.lower()
+        if "[whisper]" in lower_raw or "[low volume]" in lower_raw or "[volume down]" in lower_raw:
+            volume_mod = "-30%"
+            pitch_mod = "-5Hz"
+            rate_bonus = -5
+        elif "[loud]" in lower_raw or "[volume up]" in lower_raw or "[screaming]" in lower_raw or "[shouting]" in lower_raw:
+            volume_mod = "+30%"
+            pitch_mod = "+6Hz"
+            rate_bonus = 5
+        elif "[low voice]" in lower_raw:
+            pitch_mod = "-15Hz"
+        elif "[excited]" in lower_raw or "[excited tone]" in lower_raw or "[delight]" in lower_raw:
+            rate_bonus = 10
+            pitch_mod = "+6Hz"
+        elif "[sad]" in lower_raw or "[moaning]" in lower_raw:
+            rate_bonus = -8
+            pitch_mod = "-8Hz"
+            volume_mod = "-10%"
+        elif "[emphasis]" in lower_raw:
+            pitch_mod = "+5Hz"
+
+        # Strip vocal tag brackets and markdown formatting so TTS engine never reads brackets aloud
+        content = VOCAL_TAGS_REGEX.sub(' ', raw_content)
+        content = re.sub(r'\[.*?\]', ' ', content)
         content = re.sub(r'<[^>]+>', ' ', content)
         content = re.sub(r'[#*_`~]', '', content)
         content = re.sub(r'\s+', ' ', content).strip()
@@ -175,8 +262,16 @@ def sanitize_and_parse_script(raw_text: str, max_chunk_chars: int = 350) -> List
         if not content:
             continue
 
+        segment_meta = {
+            "type": "speech",
+            "content": content,
+            "volume": volume_mod,
+            "pitch": pitch_mod,
+            "rate_bonus": rate_bonus,
+        }
+
         if len(content) <= max_chunk_chars:
-            final_segments.append({"type": "speech", "content": content})
+            final_segments.append(segment_meta)
         else:
             sentences = re.split(r'(?<=[.!?])\s+', content)
             curr = ""
@@ -188,10 +283,10 @@ def sanitize_and_parse_script(raw_text: str, max_chunk_chars: int = 350) -> List
                     curr = f"{curr} {sent}".strip() if curr else sent
                 else:
                     if curr:
-                        final_segments.append({"type": "speech", "content": curr})
+                        final_segments.append({**segment_meta, "content": curr})
                     curr = sent
             if curr:
-                final_segments.append({"type": "speech", "content": curr})
+                final_segments.append({**segment_meta, "content": curr})
 
     return final_segments
 
@@ -210,12 +305,19 @@ VOICE_MAP = {
 }
 
 
-async def _synthesize_neural_segment_async(text: str, voice: str, rate_str: str, target_sr: int = 24000):
+async def _synthesize_neural_segment_async(
+    text: str,
+    voice: str,
+    rate_str: str,
+    volume_str: str = "+0%",
+    pitch_str: str = "+0Hz",
+    target_sr: int = 24000
+):
     import edge_tts
     from pydub import AudioSegment
     import numpy as np
 
-    comm = edge_tts.Communicate(text, voice, rate=rate_str)
+    comm = edge_tts.Communicate(text, voice, rate=rate_str, volume=volume_str, pitch=pitch_str)
     mp3_buf = io.BytesIO()
     async for chunk in comm.stream():
         if chunk.get("type") == "audio":
@@ -231,21 +333,31 @@ async def _synthesize_neural_segment_async(text: str, voice: str, rate_str: str,
     return samples
 
 
-def synthesize_segment_neural(text: str, voice_seed: int = 2222, speed: float = 1.0):
+def synthesize_segment_neural(
+    text: str,
+    voice_seed: int = 2222,
+    speed: float = 1.0,
+    rate_bonus: int = 0,
+    volume_str: str = "+0%",
+    pitch_str: str = "+0Hz"
+):
     """
     Synthesizes authentic, studio-grade spoken Indonesian voice (natural human intonation).
     Powered by high-definition Indonesian neural voices (id-ID-ArdiNeural / id-ID-GadisNeural).
+    Supports dynamic prosody, volume, and pitch adjustments driven by vocal tags.
     """
     import asyncio
     import concurrent.futures
 
     voice = VOICE_MAP.get(voice_seed, "id-ID-ArdiNeural" if (voice_seed or 0) % 2 == 0 else "id-ID-GadisNeural")
-    speed_factor = int(round((speed - 1.0) * 100))
+    speed_factor = int(round((speed - 1.0) * 100)) + rate_bonus
     rate_str = f"{speed_factor:+d}%" if speed_factor != 0 else "+0%"
 
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(asyncio.run, _synthesize_neural_segment_async(text, voice, rate_str))
+            future = executor.submit(asyncio.run, _synthesize_neural_segment_async(
+                text, voice, rate_str, volume_str, pitch_str
+            ))
             return future.result(timeout=45)
     except Exception as e:
         logger.error(f"Neural voice synthesis exception on '{text[:30]}': {e}")
@@ -274,8 +386,9 @@ def synthesize_segments_to_wav(
     active_speed = req.get_speed()
     speech_results: Dict[int, np.ndarray] = {}
 
-    def process_segment(idx: int, content: str):
+    def process_segment(idx: int, seg: dict):
         t0 = time.time()
+        content = seg["content"]
         logger.info(f"🎙️ [Voice Synthesis] Seg #{idx} ({len(content)} chars): '{content[:35]}...'")
         if is_model_ready and fish_model is not None:
             try:
@@ -285,7 +398,18 @@ def synthesize_segments_to_wav(
             except Exception as e:
                 logger.warning(f"Fish-Speech fallback to Indonesian Neural on seg #{idx}: {e}")
 
-        res = synthesize_segment_neural(content, active_seed, active_speed)
+        vol = seg.get("volume", "+0%")
+        pitch = seg.get("pitch", "+0Hz")
+        rate_b = seg.get("rate_bonus", 0)
+
+        res = synthesize_segment_neural(
+            content,
+            active_seed,
+            active_speed,
+            rate_bonus=rate_b,
+            volume_str=vol,
+            pitch_str=pitch
+        )
         logger.info(f"✅ [Voice Done] Seg #{idx} in {time.time() - t0:.2f}s")
         return idx, res
 
@@ -293,7 +417,7 @@ def synthesize_segments_to_wav(
         max_workers = min(3, len(speech_indices))
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = {
-                executor.submit(process_segment, idx, segments[idx]["content"]): idx
+                executor.submit(process_segment, idx, segments[idx]): idx
                 for idx in speech_indices
             }
             for future in concurrent.futures.as_completed(futures):
@@ -378,6 +502,80 @@ def health_check():
     }
 
 
+@app.get("/v1/models")
+@app.get("/models")
+def get_available_models():
+    """Returns available model checkpoints and voice personas"""
+    checkpoints = [
+        {
+            "id": "indonesia-lora",
+            "name": "Indonesia Fine-Tuned (X-Lord Dataset LoRA)",
+            "description": "Trained on 16.4 hours of Indonesian speech dataset for natural local intonation.",
+            "is_ready": (CHECKPOINTS_DIR / "indonesia-tts-merged").exists(),
+            "recommended": True
+        },
+        {
+            "id": "standby-neural",
+            "name": "High-Definition Indonesian Neural Engine",
+            "description": "Studio-grade neural voice synthesis engine tuned for Indonesian podcast & narration.",
+            "is_ready": True,
+            "recommended": True
+        },
+        {
+            "id": "default",
+            "name": "Base Model (Fish-Speech openaudio-s1-mini)",
+            "description": "Multilingual foundation model supporting zero-shot cloning.",
+            "is_ready": (CHECKPOINTS_DIR / "openaudio-s1-mini").exists(),
+            "recommended": False
+        }
+    ]
+
+    voices = [
+        {
+            "seed": 2222,
+            "name": "Host Natural Indonesia (Pria)",
+            "gender": "male",
+            "style": "Casual, Hangat & Percakapan",
+            "default_speed": 1.0,
+            "voice_id": "id-ID-ArdiNeural"
+        },
+        {
+            "seed": 4444,
+            "name": "Host Energik Podcast (Pria)",
+            "gender": "male",
+            "style": "Dynamic, Upbeat & Review Produk",
+            "default_speed": 1.05,
+            "voice_id": "id-ID-ArdiNeural"
+        },
+        {
+            "seed": 6666,
+            "name": "Host Narasi Kalem (Wanita)",
+            "gender": "female",
+            "style": "Calm, Jelas & Edukasi",
+            "default_speed": 1.0,
+            "voice_id": "id-ID-GadisNeural"
+        },
+        {
+            "seed": 8888,
+            "name": "Host Storyteller Deep (Wanita)",
+            "gender": "female",
+            "style": "Dramatic & Storytelling Mendalam",
+            "default_speed": 0.95,
+            "voice_id": "id-ID-GadisNeural"
+        }
+    ]
+
+    return {
+        "active_checkpoint": active_checkpoint,
+        "device": device_info,
+        "checkpoints": checkpoints,
+        "voices": voices,
+        "default_paragraph_delay": 1.0,
+        "supported_tags": ["<break time=\"0.5s\"/>", "<break time=\"1s\"/>", "<break time=\"1.5s\"/>", "<break time=\"2s\"/>"],
+        "supported_vocal_tags": ALL_VOCAL_TAGS
+    }
+
+
 # ==========================================
 # API Endpoints: Synchronous TTS
 # ==========================================
@@ -389,7 +587,7 @@ async def synthesize_speech(req: TtsRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
 
-    segments = sanitize_and_parse_script(req.text)
+    segments = sanitize_and_parse_script(req.text, paragraph_delay=req.get_paragraph_delay())
     if not any(s["type"] == "speech" for s in segments):
         raise HTTPException(status_code=400, detail="Text contains no readable speech content")
 
@@ -467,7 +665,7 @@ def create_tts_job(req: TtsRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
 
-    segments = sanitize_and_parse_script(req.text)
+    segments = sanitize_and_parse_script(req.text, paragraph_delay=req.get_paragraph_delay())
     speech_segments = [s for s in segments if s["type"] == "speech"]
     if not speech_segments:
         raise HTTPException(status_code=400, detail="Text contains no readable speech content")

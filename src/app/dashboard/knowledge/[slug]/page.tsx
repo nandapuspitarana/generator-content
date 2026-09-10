@@ -344,6 +344,13 @@ export default function KnowledgeBaseDetail() {
                   >
                     IG Carousel
                   </button>
+                  <button 
+                    onClick={() => setActivePromptType('podcast-script')}
+                    className={`text-left px-3 py-2 rounded-lg text-sm transition-colors border flex items-center justify-between ${activePromptType === 'podcast-script' ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-outline-variant hover:bg-surface-container text-on-surface'}`}
+                  >
+                    <span>🎙️ Naskah Audio / Podcast</span>
+                    <span className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded font-mono">34 Tags</span>
+                  </button>
                 </div>
               </div>
 

@@ -128,6 +128,7 @@ export const TtsSynthesizeSchema = z.object({
   top_K: z.number().int().min(1).max(100).optional().default(20),
   voice_seed: z.number().int().optional().default(2222),
   speed: z.number().min(0.5).max(2.0).optional().default(1.0),
+  paragraph_delay: z.number().min(0).max(5).optional().default(1.0),
 });
 
 export type TtsSynthesizeInput = z.infer<typeof TtsSynthesizeSchema>;
