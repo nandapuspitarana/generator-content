@@ -1,0 +1,13 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+torch>=2.4.0
+torchaudio>=2.4.0
+transformers>=4.45.0
+soundfile>=0.12.1
+numpy>=1.26.0,<2.0.0
+scipy>=1.13.0
+datasets>=2.20.0
+huggingface_hub>=0.24.0
+pydantic>=2.0.0
+pydub>=0.25.1
+pyarrow>=15.0.0

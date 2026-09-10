@@ -8,8 +8,13 @@
     "start": "next start -p 3300",
     "lint": "eslint",
     "test": "vitest run",
-    "chattts:dev": "python services/chattts/main.py",
-    "chattts:cli": "python services/chattts/cli_debug.py"
+    "tts:dev": "python services/fish-speech/main.py",
+    "tts:setup": "python services/fish-speech/setup.py",
+    "tts:download": "python services/fish-speech/training/01_download_dataset.py",
+    "tts:extract": "python services/fish-speech/training/02_extract_vq.py",
+    "tts:proto": "python services/fish-speech/training/03_build_proto.py",
+    "tts:merge": "python services/fish-speech/training/05_merge_and_test.py",
+    "chattts:dev": "python services/fish-speech/main.py"
   },
 
   "dependencies": {

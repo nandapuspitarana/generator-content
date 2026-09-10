@@ -1,13 +1,17 @@
-# Implementation Plan: ChatTTS Generative Dialogue Speech Microservice
+# Implementation Plan: Fish-Speech & Dialogue Speech Microservice (Upgraded from ChatTTS)
 
-**Branch**: `003-chattts-service` | **Date**: 2026-09-09 | **Spec**: [spec.md](file:///c:/Users/nanda/Documents/playground/content/generator-content/specs/003-chattts-service/spec.md)
+**Branch**: `003-chattts-service` | **Date**: 2026-09-10 | **Spec**: [spec.md](file:///c:/Users/nanda/Documents/playground/content/generator-content/specs/003-chattts-service/spec.md)
 **Input**: Feature specification from `/specs/003-chattts-service/spec.md`
+
+> [!NOTE]
+> **Update 2026-09-10**: Layanan TTS telah di-upgrade dari ChatTTS ke **[Fish-Speech](https://github.com/fishaudio/fish-speech)** (`services/fish-speech/`) dengan integrasi penuh dataset **[X-lord/Dataset-Text-To-Speech-Indonesia](https://huggingface.co/datasets/X-lord/Dataset-Text-To-Speech-Indonesia)** (4.531 file, 16.4 jam audio narasi Bahasa Indonesia 24kHz), akselerasi native GPU GTX 1650, dan zero-shot voice cloning.
 
 ## Summary
 
-Mengintegrasikan model AI generatif suara dialog **ChatTTS** (oleh 2noise) sebagai **service terpisah**. Sistem mendukung **dua mode eksekusi fleksibel**:
-1. **Mode Direct Python Script (Rekomendasi untuk Development & Debugging)**: Dijalankan langsung dengan Python (`python services/chattts/main.py` atau `npm run chattts:dev`) untuk kemudahan debugging, live logs, dan penggunaan native GPU host tanpa overhead container.
-2. **Mode Docker Container (Rekomendasi untuk Staging & Production)**: Dijalankan via Docker Compose (`docker compose up chattts -d`) untuk isolasi lingkungan total.
+Mengintegrasikan model AI generatif suara dialog multilingual & Bahasa Indonesia (**Fish-Speech**) sebagai **service terpisah**. Sistem mendukung:
+1. **Mode Direct Python Script**: Dijalankan langsung dengan Python (`npm run tts:dev` atau `python services/fish-speech/main.py`) dengan akselerasi native NVIDIA GPU (GTX 1650 4GB FP16).
+2. **Mode Docker Container**: Dijalankan via Docker Compose (`docker compose up fish-speech -d`).
+3. **Dataset & Training Pipeline**: Script pengunduhan dan pra-pemrosesan dataset Indonesia (`npm run tts:download`) serta notebook training Google Colab GPU T4 gratis.
 
 Next.js App Router bertindak sebagai API gateway/bridge melalui route `/api/tts` yang berkomunikasi ke `http://localhost:8765` secara transparan, dilengkapi validasi Zod, rate limiting sliding-window, dan antarmuka UI modal studio audio interaktif di editor artikel/podcast.
 

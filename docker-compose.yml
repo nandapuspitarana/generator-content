@@ -29,21 +29,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  chattts:
+  fish-speech:
     build:
-      context: ./services/chattts
+      context: ./services/fish-speech
       dockerfile: Dockerfile
-    container_name: asikreview-chattts
+    container_name: asikreview-fish-speech
     environment:
       - PORT=8765
-      - CHATTTS_COMPILE=false
     ports:
       - "8765:8765"
     volumes:
-      - chattts_cache:/root/.cache
+      - fish_speech_cache:/root/.cache
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8765/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8765/v1/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -51,6 +50,6 @@ services:
 volumes:
   es_data:
     driver: local
-  chattts_cache:
+  fish_speech_cache:
     driver: local
 

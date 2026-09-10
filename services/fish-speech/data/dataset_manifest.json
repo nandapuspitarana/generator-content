@@ -1,0 +1,53 @@
+{
+  "dataset_name": "X-lord/Dataset-Text-To-Speech-Indonesia",
+  "language": "id",
+  "speaker": "Speaker_Indonesia",
+  "sample_rate": 24000,
+  "format": "WAV (PCM_16) + .lab",
+  "total_segments": 5,
+  "total_duration_seconds": 64.45,
+  "total_duration_hours": 0.018,
+  "output_directory": "C:\\Users\\nanda\\Documents\\playground\\content\\generator-content\\services\\fish-speech\\data\\Speaker_Indonesia",
+  "segments": [
+    {
+      "id": "segment_00001",
+      "wav": "segment_00001.wav",
+      "lab": "segment_00001.lab",
+      "text": "RONGGENG DUKUH PARUK, KARIAH AAMAT TOHARI, UNTUK LELAKI, PEREMPUAN, AND ANAK-ANAK DUKUH PARUK",
+      "duration": 13.5,
+      "sample_rate": 24000
+    },
+    {
+      "id": "segment_00002",
+      "wav": "segment_00002.wav",
+      "lab": "segment_00002.lab",
+      "text": "Buku Pertama, catatan buat emak. Bap Satu, sepasang burung bangau melayang meniti angin, berputar-putar tinggi di langit, tanpa sekalipun mengepak sayap.",
+      "duration": 13.44,
+      "sample_rate": 24000
+    },
+    {
+      "id": "segment_00003",
+      "wav": "segment_00003.wav",
+      "lab": "segment_00003.lab",
+      "text": "Mereka mengapung berjam-jam lamanya. Suaranya melengking seperti keluhan panjang. Air. Kedua ungas itu telah melayang beratus-ratus kilometer mencari genangan air.",
+      "duration": 12.58,
+      "sample_rate": 24000
+    },
+    {
+      "id": "segment_00004",
+      "wav": "segment_00004.wav",
+      "lab": "segment_00004.lab",
+      "text": "telah lama mereka merindukan amparan lumpur tempat mereka mencari mangsa, katak, ikan, udang, atau serangga air lainnya. Namun kemarau belum usai.",
+      "duration": 13.57,
+      "sample_rate": 24000
+    },
+    {
+      "id": "segment_00005",
+      "wav": "segment_00005.wav",
+      "lab": "segment_00005.lab",
+      "text": "Ribuan hektar sawah yang mengelilingi duku paruk telah tujuh bulan kerontang. Supasang berumbangau itu tak akan menemukan genangan air, meski hanya celeber telapak kaki.",
+      "duration": 11.36,
+      "sample_rate": 24000
+    }
+  ]
+}

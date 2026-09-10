@@ -40,3 +40,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# audio test files in root
+/*.wav
+/*.mp3
+
+# fish-speech checkpoints, cloned repo, and training protos
+services/fish-speech/checkpoints/
+services/fish-speech/fish-speech-repo/
+services/fish-speech/data/protos/
