@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality for Spec 003
 **Created**: 2026-09-09  
-**Feature**: [spec.md](file:///c:/Users/nanda/Documents/playground/content/generator-content/specs/003-chattts-service/spec.md)
+**Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 

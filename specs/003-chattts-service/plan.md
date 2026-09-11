@@ -1,7 +1,7 @@
 # Implementation Plan: Fish-Speech & Dialogue Speech Microservice (Upgraded from ChatTTS)
 
-**Branch**: `003-chattts-service` | **Date**: 2026-09-10 | **Spec**: [spec.md](file:///c:/Users/nanda/Documents/playground/content/generator-content/specs/003-chattts-service/spec.md)
-**Input**: Feature specification from `/specs/003-chattts-service/spec.md`
+**Branch**: `003-chattts-service` | **Date**: 2026-09-10 | **Spec**: [spec.md](spec.md)
+**Input**: Feature specification from `spec.md`
 
 > [!NOTE]
 > **Update 2026-09-10**: Layanan TTS telah di-upgrade dari ChatTTS ke **[Fish-Speech](https://github.com/fishaudio/fish-speech)** (`services/fish-speech/`) dengan integrasi penuh dataset **[X-lord/Dataset-Text-To-Speech-Indonesia](https://huggingface.co/datasets/X-lord/Dataset-Text-To-Speech-Indonesia)** (4.531 file, 16.4 jam audio narasi Bahasa Indonesia 24kHz), akselerasi native GPU GTX 1650, dan zero-shot voice cloning.

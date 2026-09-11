@@ -1,6 +1,6 @@
 # Implementation Plan: AsikReview Generator Web App
 
-**Branch**: `002-asikreview-web-app` | **Date**: 2026-06-24 | **Spec**: [spec.md](file:///D:/playground/content-generator/ai-content-generator/specs/002-asikreview-web-app/spec.md)
+**Branch**: `002-asikreview-web-app` | **Date**: 2026-06-24 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/002-asikreview-web-app/spec.md`
 
 ## Summary

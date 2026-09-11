@@ -75,13 +75,13 @@ python run.py tts # Jalankan hanya service TTS saja
 # Menjalankan Elasticsearch & Kibana:
 docker compose up -d
 
-# Menjalankan ChatTTS microservice via container (port 8765):
-docker compose up chattts -d
+# Menjalankan Fish-Speech microservice via container (port 8765):
+docker compose up fish-speech -d
 ```
 *Layanan yang berjalan:*
 - **Elasticsearch**: [http://localhost:9200](http://localhost:9200) (Data tersimpan di volume `es_data`)
 - **Kibana** *(UI Manajemen Index)*: [http://localhost:5601](http://localhost:5601)
-- **ChatTTS Service**: [http://localhost:8765](http://localhost:8765) (Health check: `http://localhost:8765/health`)
+- **Fish-Speech Service**: [http://localhost:8765](http://localhost:8765) (Health check: `http://localhost:8765/v1/health`)
 
 
 

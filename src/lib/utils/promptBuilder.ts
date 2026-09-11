@@ -173,6 +173,7 @@ Petunjuk Penting Penulisan Naskah Audio (Fish-Speech / TTS Compatible):
    - Dinamika Suara: [emphasis], [whisper], [low voice], [low volume], [volume down], [loud], [volume up], [screaming], [shouting]
    - Emosi & Mood: [excited], [excited tone], [surprised], [shocked], [angry], [sad], [singing], [echo], [interrupting], [moaning], [with strong accent]
    - Tag Jeda SSML: <break time="1s"/>, <break time="1.5s"/>, <break time="2s"/>
+4. Pelafalan & Istilah Asing: Pertahankan istilah bahasa Inggris atau judul buku internasional (misal: 'Thinking, Fast and Slow', 'Atomic Habits', 'deep work') dalam ejaan aslinya agar model vokal melafalkannya dengan aksen yang fasih dan alami.
 
 Struktur:
 - Pembuka: Hook menarik, sapaan hangat, dan latar belakang masalah.

@@ -43,6 +43,7 @@ interface VoiceOption {
   seed: number;
   name: string;
   gender: "male" | "female";
+  language?: "id" | "en-multi";
   style: string;
   default_speed?: number;
 }
@@ -57,8 +58,8 @@ const DEFAULT_MODELS: ModelCheckpointOption[] = [
   },
   {
     id: "standby-neural",
-    name: "⚡ High-Definition Indonesian Neural Engine",
-    description: "Mesin vokal studio berkualitas tinggi untuk podcast dan narasi artikel.",
+    name: "⚡ High-Definition Neural Engine (Studio)",
+    description: "Mesin vokal studio berkualitas tinggi untuk podcast dan narasi buku (ID & EN Multilingual).",
     is_ready: true,
     recommended: true,
   },
@@ -72,10 +73,12 @@ const DEFAULT_MODELS: ModelCheckpointOption[] = [
 ];
 
 const DEFAULT_VOICES: VoiceOption[] = [
+  // 🇮🇩 Bahasa Indonesia
   {
     seed: 2222,
     name: "Ardi Natural (Pria)",
     gender: "male",
+    language: "id",
     style: "Casual, Hangat & Percakapan",
     default_speed: 1.0,
   },
@@ -83,13 +86,15 @@ const DEFAULT_VOICES: VoiceOption[] = [
     seed: 4444,
     name: "Ardi Energik (Pria)",
     gender: "male",
-    style: "Dinamis, Upbeat & Review Produk",
+    language: "id",
+    style: "Dinamis, Upbeat & Review Buku",
     default_speed: 1.05,
   },
   {
     seed: 6666,
     name: "Gadis Narasi (Wanita)",
     gender: "female",
+    language: "id",
     style: "Kalem, Jelas & Edukasi",
     default_speed: 1.0,
   },
@@ -97,7 +102,41 @@ const DEFAULT_VOICES: VoiceOption[] = [
     seed: 8888,
     name: "Gadis Storyteller (Wanita)",
     gender: "female",
+    language: "id",
     style: "Dramatis & Storytelling Mendalam",
+    default_speed: 0.95,
+  },
+  // 🌐 English & Multilingual (Buku Asing, Campuran & Code-Switching)
+  {
+    seed: 1111,
+    name: "Andrew Multilingual (Pria)",
+    gender: "male",
+    language: "en-multi",
+    style: "Pelafalan Inggris Fasih & Buku Campuran",
+    default_speed: 1.0,
+  },
+  {
+    seed: 3333,
+    name: "Emma Audiobook (Wanita)",
+    gender: "female",
+    language: "en-multi",
+    style: "Narator Buku Internasional & Elegan",
+    default_speed: 0.95,
+  },
+  {
+    seed: 5555,
+    name: "Brian Conversational (Pria)",
+    gender: "male",
+    language: "en-multi",
+    style: "Diskusi Santai & Tech Review",
+    default_speed: 1.0,
+  },
+  {
+    seed: 7777,
+    name: "Ava Storyteller (Wanita)",
+    gender: "female",
+    language: "en-multi",
+    style: "Cerita Fiksi & Narasi Ekspresif",
     default_speed: 0.95,
   },
 ];
@@ -106,7 +145,7 @@ export function AudioPlayerModal({
   isOpen,
   onClose,
   initialText,
-  title = "Fish-Speech Studio (Bahasa Indonesia)",
+  title = "Fish-Speech Studio (Multilingual & Indonesia)",
 }: AudioPlayerModalProps) {
   const [text, setText] = useState(initialText || "");
   const [model, setModel] = useState<string>("indonesia-lora");
@@ -543,7 +582,7 @@ export function AudioPlayerModal({
                 </button>
               </div>
               <select
-                value={[2222, 4444, 6666, 8888].includes(voiceSeed) ? voiceSeed : "custom"}
+                value={DEFAULT_VOICES.some((v) => v.seed === voiceSeed) ? voiceSeed : "custom"}
                 onChange={(e) => {
                   if (e.target.value !== "custom") {
                     setVoiceSeed(Number(e.target.value));
@@ -552,12 +591,21 @@ export function AudioPlayerModal({
                 disabled={isLoading}
                 className="w-full h-10 px-3 rounded-xl bg-[#faf9f6] border border-[#e8e7e0] text-xs font-medium text-[#191919] outline-none focus:border-[#191919] cursor-pointer"
               >
-                {DEFAULT_VOICES.map((v) => (
-                  <option key={v.seed} value={v.seed}>
-                    {v.name} ({v.style})
-                  </option>
-                ))}
-                {![2222, 4444, 6666, 8888].includes(voiceSeed) && (
+                <optgroup label="🇮🇩 Bahasa Indonesia">
+                  {DEFAULT_VOICES.filter((v) => v.language === "id").map((v) => (
+                    <option key={v.seed} value={v.seed}>
+                      {v.name} ({v.style})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🌐 English & Multilingual (Buku Asing & Campuran)">
+                  {DEFAULT_VOICES.filter((v) => v.language === "en-multi").map((v) => (
+                    <option key={v.seed} value={v.seed}>
+                      {v.name} ({v.style})
+                    </option>
+                  ))}
+                </optgroup>
+                {!DEFAULT_VOICES.some((v) => v.seed === voiceSeed) && (
                   <option value="custom">Custom Voice Seed ({voiceSeed})</option>
                 )}
               </select>

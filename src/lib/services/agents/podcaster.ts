@@ -83,7 +83,8 @@ Aturan Format (SANGAT PENTING - Fish-Speech & Studio Audio Ready):
    - Jeda & Napas: [pause] (1s), [short pause] (0.5s), [inhale], [exhale], [sigh], [clearing throat], [panting], [tsk], atau <break time="1s"/>, <break time="1.5s"/>, <break time="2s"/>
    - Tawa & Respon: [laughing], [chuckle], [chuckling], [laughing tone], [delight], [audience laughter]
    - Dinamika Suara: [emphasis], [whisper], [low voice], [low volume], [volume down], [loud], [volume up], [screaming], [shouting]
-   - Emosi & Mood: [excited], [excited tone], [surprised], [shocked], [angry], [sad], [singing], [echo], [interrupting], [moaning], [with strong accent]`;
+   - Emosi & Mood: [excited], [excited tone], [surprised], [shocked], [angry], [sad], [singing], [echo], [interrupting], [moaning], [with strong accent]
+5. Istilah Bahasa Inggris & Buku Asing: Jika materi referensi mengandung istilah bahasa Inggris, judul buku internasional, atau konsep teknis (contoh: 'Thinking, Fast and Slow', 'Atomic Habits', 'deep work'), pertahankan ejaan asli bahasa Inggris dengan benar agar pelafalan oleh suara AI terdengar natural dan fasih. Jika naskah referensi sepenuhnya berbahasa Inggris, hasilkan naskah utuh berbahasa Inggris.`;
 
   const combinedSegments = segments.map((seg, i) => `--- SEGMEN ${i + 1} ---\n${seg}`).join("\n\n");
 

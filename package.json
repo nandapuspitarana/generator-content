@@ -1,5 +1,5 @@
 {
-  "name": "temp-app",
+  "name": "generator-content",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,13 +8,14 @@
     "start": "next start -p 3300",
     "lint": "eslint",
     "test": "vitest run",
+    "import:pdf": "node scripts/import-pdf.mjs",
+    "verify:podcast": "node scripts/run-verify-podcast.mjs",
     "tts:dev": "python services/fish-speech/main.py",
     "tts:setup": "python services/fish-speech/setup.py",
     "tts:download": "python services/fish-speech/training/01_download_dataset.py",
     "tts:extract": "python services/fish-speech/training/02_extract_vq.py",
     "tts:proto": "python services/fish-speech/training/03_build_proto.py",
     "tts:merge": "python services/fish-speech/training/05_merge_and_test.py",
-    "chattts:dev": "python services/fish-speech/main.py",
     "dev:all": "python run.py",
     "stop": "python run.py stop",
     "status": "python run.py status"

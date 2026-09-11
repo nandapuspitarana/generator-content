@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-06-24
-**Feature**: [spec.md](file:///d:/playground/content-generator/ai-content-generator/specs/002-asikreview-web-app/spec.md)
+**Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 

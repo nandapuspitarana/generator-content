@@ -298,10 +298,16 @@ def generate_silence(duration_sec: float, sample_rate: int = 24000):
 
 
 VOICE_MAP = {
-    2222: "id-ID-ArdiNeural",    # Host Natural Indonesia (Pria)
-    4444: "id-ID-ArdiNeural",    # Host Energik Podcast (Pria)
-    6666: "id-ID-GadisNeural",   # Host Narasi Kalem (Wanita)
-    8888: "id-ID-GadisNeural",   # Host Storyteller (Wanita)
+    # Suara Bahasa Indonesia (Native ID)
+    2222: "id-ID-ArdiNeural",                # Ardi Natural (Pria)
+    4444: "id-ID-ArdiNeural",                # Ardi Energik (Pria)
+    6666: "id-ID-GadisNeural",               # Gadis Narasi (Wanita)
+    8888: "id-ID-GadisNeural",               # Gadis Storyteller (Wanita)
+    # Suara English & Multilingual (Bilingual / Code-Switching / Full English Books)
+    1111: "en-US-AndrewMultilingualNeural",  # Andrew Multilingual (Pria - Buku & Podcast)
+    3333: "en-US-EmmaMultilingualNeural",    # Emma Audiobook (Wanita - Narasi Buku Internasional)
+    5555: "en-US-BrianMultilingualNeural",   # Brian Conversational (Pria - Diskusi & Casual)
+    7777: "en-US-AvaMultilingualNeural",     # Ava Storyteller (Wanita - Cerita & Fiksi)
 }
 
 
@@ -531,37 +537,79 @@ def get_available_models():
     ]
 
     voices = [
+        # Bahasa Indonesia (Native ID)
         {
             "seed": 2222,
-            "name": "Host Natural Indonesia (Pria)",
+            "name": "Ardi Natural (Pria)",
             "gender": "male",
-            "style": "Casual, Hangat & Percakapan",
+            "language": "id",
+            "style": "🇮🇩 Casual, Hangat & Percakapan",
             "default_speed": 1.0,
             "voice_id": "id-ID-ArdiNeural"
         },
         {
             "seed": 4444,
-            "name": "Host Energik Podcast (Pria)",
+            "name": "Ardi Energik (Pria)",
             "gender": "male",
-            "style": "Dynamic, Upbeat & Review Produk",
+            "language": "id",
+            "style": "🇮🇩 Dinamis, Upbeat & Review Buku",
             "default_speed": 1.05,
             "voice_id": "id-ID-ArdiNeural"
         },
         {
             "seed": 6666,
-            "name": "Host Narasi Kalem (Wanita)",
+            "name": "Gadis Narasi (Wanita)",
             "gender": "female",
-            "style": "Calm, Jelas & Edukasi",
+            "language": "id",
+            "style": "🇮🇩 Kalem, Jelas & Edukasi",
             "default_speed": 1.0,
             "voice_id": "id-ID-GadisNeural"
         },
         {
             "seed": 8888,
-            "name": "Host Storyteller Deep (Wanita)",
+            "name": "Gadis Storyteller Deep (Wanita)",
             "gender": "female",
-            "style": "Dramatic & Storytelling Mendalam",
+            "language": "id",
+            "style": "🇮🇩 Dramatis & Storytelling Mendalam",
             "default_speed": 0.95,
             "voice_id": "id-ID-GadisNeural"
+        },
+        # English & Multilingual (Buku Asing, Campuran / Code-Switching)
+        {
+            "seed": 1111,
+            "name": "Andrew Multilingual (Pria)",
+            "gender": "male",
+            "language": "en-multi",
+            "style": "🌐 Pelafalan Inggris Fasih & Buku Campuran",
+            "default_speed": 1.0,
+            "voice_id": "en-US-AndrewMultilingualNeural"
+        },
+        {
+            "seed": 3333,
+            "name": "Emma Audiobook (Wanita)",
+            "gender": "female",
+            "language": "en-multi",
+            "style": "🌐 Narator Buku Internasional & Elegan",
+            "default_speed": 0.95,
+            "voice_id": "en-US-EmmaMultilingualNeural"
+        },
+        {
+            "seed": 5555,
+            "name": "Brian Conversational (Pria)",
+            "gender": "male",
+            "language": "en-multi",
+            "style": "🌐 Diskusi Santai & Tech Review",
+            "default_speed": 1.0,
+            "voice_id": "en-US-BrianMultilingualNeural"
+        },
+        {
+            "seed": 7777,
+            "name": "Ava Storyteller (Wanita)",
+            "gender": "female",
+            "language": "en-multi",
+            "style": "🌐 Cerita Fiksi & Narasi Ekspresif",
+            "default_speed": 0.95,
+            "voice_id": "en-US-AvaMultilingualNeural"
         }
     ]
 
