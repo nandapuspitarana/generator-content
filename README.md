@@ -3,8 +3,17 @@
 Aplikasi web editorial berbasis **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4 (Swiss Editorial Design)**, **Prisma ORM (SQLite)**, dan **Elasticsearch (RAG Knowledge Base)** yang dilengkapi dengan:
 - **5-Agent AI Pipeline**: Ideator → Writer → Editor → Evaluator → Designer
 - **Live Canvas Banner Studio**: Desain cover Medium (16:9) & Instagram (1:1) dengan ekspor instan
-- **AI Podcast Generator**: Multi-segment audio script dengan format SSML kompatibel ElevenLabs
+- **Fish-Speech Audio Studio (v1.5)**: Sintesis suara dialog & narasi buku multi-bahasa, 34 Tag Ekspresi Vokal, 8 Persona Suara Studio, akselerasi NVIDIA GPU GTX 1650, dan zero-shot voice cloning
+- **AI Podcast Generator**: Multi-segment audio script dengan format SSML & 34 tag vokal siap sintesis
 - **RAG Knowledge Base**: Ekstraksi buku PDF & chat tanya-jawab berbasis Elasticsearch
+
+---
+
+## 📖 Dokumentasi Lengkap
+
+* 🐟 **[Panduan Lengkap Fish-Speech Service](docs/fish-speech-service.md)**: Arsitektur microservice suara, 8 Persona Suara Studio, panduan 34 Tag Ekspresi Vokal, pelafalan naskah Bahasa Inggris, dan referensi REST API.
+* 🎨 **[Panduan Canvas Editor](docs/canvas-editor.md)**: Arsitektur state visual editor cover banner (Medium 16:9 & Instagram 1:1), grouping, dan multi-drag.
+* 📚 **[Indeks Spesifikasi Fitur (Spec Kit)](specs/README.md)**: Dokumen spesifikasi resmi Spec Kit (`001`, `002`, `003-fish-speech-service`).
 
 ---
 
@@ -104,7 +113,12 @@ Buka [http://localhost:3300](http://localhost:3300) di browser Anda.
 
 | Perintah | Deskripsi |
 | :--- | :--- |
-| `npm run dev` | Menjalankan server development di port 3300 |
+| `npm run dev:all` | **All-in-One Service Manager**: Menjalankan Web (3300) + Fish-Speech (8765) serentak |
+| `npm run stop` | Menghentikan semua background process & membebaskan port 8765/3300 |
+| `npm run status` | Mengecek status kesehatan kedua service (Web & TTS) |
+| `npm run tts:dev` | Menjalankan service Fish-Speech backend mandiri di port 8765 |
+| `npm run import:pdf` | Mengekstrak buku PDF dan mengindeks bab ke Elasticsearch RAG |
+| `npm run dev` | Menjalankan server development Next.js di port 3300 |
 | `npm run test` | Menjalankan automated unit test suite (Vitest) |
 | `npm run build` | Melakukan compile dan build production Next.js |
 | `npm run start` | Menjalankan production server di port 3300 |

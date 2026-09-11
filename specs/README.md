@@ -10,7 +10,7 @@ Indeks dokumentasi spesifikasi fitur proyek **AI Content Generator (AsikReview)*
 |---|---|---|---|
 | **[001](001-book-review-generator/spec.md)** | **Book Review Generator CLI** | `Completed` | Generator ringkasan dan ulasan buku berbasis AI untuk platform media sosial dan blog. |
 | **[002](002-asikreview-web-app/spec.md)** | **AsikReview Generator Web App** | `Completed` | Aplikasi web editorial modern berbasis Next.js 16 (App Router), React 19, Tailwind CSS v4, Live Canvas Banner Studio, dan RAG Knowledge Base. |
-| **[003](003-chattts-service/spec.md)** | **Fish-Speech & Multilingual TTS Microservice** *(Upgraded from ChatTTS)* | `Completed` | Microservice sintesis suara dialog multilingual & Bahasa Indonesia (Port 8765), terintegrasi dengan dataset X-lord Indonesia (16.4 jam), akselerasi NVIDIA GPU GTX 1650, 34 Tag Ekspresi Vokal, dan zero-shot voice cloning. |
+| **[003](003-fish-speech-service/spec.md)** | **Fish-Speech & Multilingual TTS Microservice** *(Upgraded from ChatTTS)* | `Active / Complete (Roadmap Pending)` | Microservice sintesis suara dialog multilingual & Bahasa Indonesia (Port 8765), terintegrasi dengan dataset X-lord Indonesia (16.4 jam), akselerasi NVIDIA GPU GTX 1650, 34 Tag Ekspresi Vokal, dan zero-shot voice cloning. |
 
 ---
 
