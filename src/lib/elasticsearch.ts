@@ -5,8 +5,8 @@ const esClient = new Client({
   auth: process.env.ELASTICSEARCH_API_KEY ? {
     apiKey: process.env.ELASTICSEARCH_API_KEY
   } : undefined,
-  requestTimeout: 15000,
-  maxRetries: 2
+  requestTimeout: 3000,
+  maxRetries: 0
 })
 
 export async function isElasticsearchAlive(): Promise<boolean> {

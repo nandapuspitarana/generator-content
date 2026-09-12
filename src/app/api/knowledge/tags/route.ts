@@ -13,7 +13,11 @@ export async function GET() {
         sort: [{ createdAt: { order: 'desc', unmapped_type: 'date' } }]
       })
     } catch (e: any) {
-      if (e.message?.includes('index_not_found_exception') || e.message?.includes('index_not_found')) {
+      if (
+        e.message?.includes('index_not_found') ||
+        e.name === 'ConnectionError' ||
+        e.message?.includes('ECONNREFUSED')
+      ) {
         return NextResponse.json([])
       }
       throw e;
@@ -22,6 +26,9 @@ export async function GET() {
     const tags = result.hits.hits.map((h: any) => h._source)
     return NextResponse.json(tags)
   } catch (error: any) {
+    if (error.name === 'ConnectionError' || error.message?.includes('ECONNREFUSED')) {
+      return NextResponse.json([])
+    }
     console.error('ES Get Tags Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
