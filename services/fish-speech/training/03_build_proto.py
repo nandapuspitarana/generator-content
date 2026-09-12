@@ -54,8 +54,11 @@ def build_protobuf_dataset(input_dir: Path, output_dir: Path, num_workers: int =
         "--num-workers", str(num_workers)
     ]
 
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(fish_repo_dir.resolve()) + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
+
     print(f"Executing: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, cwd=str(fish_repo_dir), env=env, check=True)
     print("\n✅ Protobuf dataset built successfully! Ready for LoRA fine-tuning.")
 
 

@@ -51,19 +51,22 @@ def run_vq_extraction(data_dir: Path, batch_size: int = 4, checkpoint_path: str 
         print("\n💡 NOTE: You can also run this step directly in Google Colab (see 04_train_lora_colab.ipynb)!")
         return
 
-    ckpt = checkpoint_path or str(root_dir / "checkpoints" / "openaudio-s1-mini" / "codec.pth")
+    ckpt = checkpoint_path or str(root_dir / "checkpoints" / "fish-speech-1.5" / "firefly-gan-vq-fsq-8x1024-21hz-generator.pth")
     cmd = [
         sys.executable,
         str(extract_script),
         str(data_dir.resolve()),
         "--num-workers", "1",
         "--batch-size", str(batch_size),
-        "--config-name", "modded_dac_vq",
+        "--config-name", "firefly_gan_vq",
         "--checkpoint-path", ckpt
     ]
 
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(fish_repo_dir.resolve()) + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
+
     print(f"Executing: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, cwd=str(fish_repo_dir), env=env, check=True)
     print("\n✅ VQ extraction finished successfully! .npy semantic tokens generated.")
 
 

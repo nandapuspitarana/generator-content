@@ -2,9 +2,9 @@
 setup.py
 --------
 Setup script for Fish-Speech environment:
-1. Checks CUDA capability and GPU status (GTX 1650 4GB VRAM)
+1. Checks CUDA capability and GPU status (GTX 1650 / RTX GPUs)
 2. Clones Fish-Speech repository if not yet present
-3. Downloads the base model openaudio-s1-mini via Hugging Face Hub
+3. Downloads the base model fishaudio/fish-speech-1.5 via Hugging Face Hub
 """
 
 import os
@@ -22,7 +22,7 @@ if sys.platform == "win32":
 
 ROOT_DIR = Path(__file__).resolve().parent
 REPO_DIR = ROOT_DIR / "fish-speech-repo"
-CHECKPOINTS_DIR = ROOT_DIR / "checkpoints" / "openaudio-s1-mini"
+CHECKPOINTS_DIR = ROOT_DIR / "checkpoints" / "fish-speech-1.5"
 FISH_SPEECH_GIT_URL = "https://github.com/fishaudio/fish-speech.git"
 
 
@@ -37,7 +37,7 @@ def check_gpu():
             dev_name = torch.cuda.get_device_name(0)
             vram_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
             print(f"  GPU Device:      {dev_name} ({vram_gb:.2f} GB VRAM)")
-            print("  Status:          ✅ GTX 1650 ready for Fish-Speech FP16 inference!")
+            print("  Status:          ✅ GPU ready for Fish-Speech FP16 inference!")
         else:
             print("  Status:          ⚠️ Running on CPU mode.")
     except ImportError:
@@ -51,7 +51,7 @@ def clone_repo():
     else:
         print(f"  Cloning {FISH_SPEECH_GIT_URL} into {REPO_DIR.resolve()}...")
         try:
-            subprocess.run(["git", "clone", "--depth", "1", FISH_SPEECH_GIT_URL, str(REPO_DIR)], check=True)
+            subprocess.run(["git", "clone", "--depth", "1", FISH_SPEECH_GIT_URL, str(REPO_DIR.resolve())], check=True)
             print("  ✅ Repository cloned successfully!")
         except Exception as e:
             print(f"  ⚠️ Could not clone automatically: {e}")
@@ -59,26 +59,13 @@ def clone_repo():
 
 
 def download_base_model():
-    print("\n[3/3] Checking Base Model Checkpoint (openaudio-s1-mini)...")
-    CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
-    codec_file = CHECKPOINTS_DIR / "codec.pth"
-
-    if codec_file.exists():
-        print(f"  ✅ Model checkpoint already exists at: {CHECKPOINTS_DIR.resolve()}")
-    else:
-        print(f"  Downloading base checkpoint fishaudio/openaudio-s1-mini from Hugging Face...")
-        try:
-            from huggingface_hub import snapshot_download
-            snapshot_download(
-                repo_id="fishaudio/openaudio-s1-mini",
-                local_dir=str(CHECKPOINTS_DIR.resolve()),
-                ignore_patterns=["*.bin", "*.msgpack"]
-            )
-            print("  ✅ Base model downloaded successfully!")
-        except Exception as e:
-            print(f"  ⚠️ Automatic download encountered: {e}")
-            print(f"     You can download it manually with:")
-            print(f"     huggingface-cli download fishaudio/openaudio-s1-mini --local-dir {CHECKPOINTS_DIR.resolve()}")
+    print("\n[3/3] Checking Base Model Checkpoint (fish-speech-1.5)...")
+    try:
+        from download_model import download_fish_speech_model
+        download_fish_speech_model("fishaudio/fish-speech-1.5", CHECKPOINTS_DIR)
+    except Exception as e:
+        print(f"  ⚠️ Invoking download_model.py fallback: {e}")
+        subprocess.run([sys.executable, str(ROOT_DIR / "download_model.py")])
 
 
 if __name__ == "__main__":
@@ -92,6 +79,6 @@ if __name__ == "__main__":
     print("  🎉 Setup check complete!")
     print("  To launch the microservice:")
     print("     npm run tts:dev")
-    print("  To download Indonesian dataset:")
-    print("     npm run tts:download")
+    print("  To download model weights directly:")
+    print("     npm run tts:download-model")
     print("=" * 65 + "\n")

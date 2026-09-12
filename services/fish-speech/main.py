@@ -41,8 +41,8 @@ CHECKPOINTS_DIR = BASE_DIR / "checkpoints"
 def load_fish_speech():
     """
     Initializes Fish-Speech engine:
-    1. Checks CUDA GPU (GTX 1650)
-    2. Looks for fine-tuned or base model checkpoint
+    1. Checks CUDA GPU capability
+    2. Looks for fine-tuned or base model checkpoint (fish-speech-1.5 / openaudio-s1-mini)
     3. Loads model onto GPU if available
     """
     global fish_model, is_model_ready, device_info, active_checkpoint
@@ -54,17 +54,32 @@ def load_fish_speech():
             device_info = "cpu"
         logger.info(f"Compute device initialized: {device_info}")
 
-        # Check for merged / fine-tuned checkpoint first, then base
+        # Check for merged / fine-tuned checkpoint first, then base v1.5, then openaudio-s1-mini
+        local_merged_ckpt = CHECKPOINTS_DIR / "indonesia-tts-local-merged"
         merged_ckpt = CHECKPOINTS_DIR / "indonesia-tts-merged"
+        v15_ckpt = CHECKPOINTS_DIR / "fish-speech-1.5"
         base_ckpt = CHECKPOINTS_DIR / "openaudio-s1-mini"
 
+        def is_valid_ckpt(ckpt_path: Path) -> bool:
+            if not ckpt_path.exists():
+                return False
+            has_model = (ckpt_path / "model.pth").exists()
+            has_codec = (ckpt_path / "codec.pth").exists() or (ckpt_path / "firefly-gan-vq-fsq-8x1024-21hz-generator.pth").exists()
+            return has_model and has_codec
+
         target_ckpt = None
-        if merged_ckpt.exists() and (merged_ckpt / "codec.pth").exists():
+        if is_valid_ckpt(local_merged_ckpt):
+            target_ckpt = local_merged_ckpt
+            active_checkpoint = "indonesia-tts-local-merged (LoRA Fine-tuned Indonesian)"
+        elif is_valid_ckpt(merged_ckpt):
             target_ckpt = merged_ckpt
-            active_checkpoint = "indonesia-tts-merged (LoRA Fine-tuned)"
-        elif base_ckpt.exists() and (base_ckpt / "codec.pth").exists():
+            active_checkpoint = "indonesia-tts-merged (LoRA Fine-tuned Offline)"
+        elif is_valid_ckpt(v15_ckpt):
+            target_ckpt = v15_ckpt
+            active_checkpoint = "fish-speech-1.5 (Local Offline Weights Active)"
+        elif is_valid_ckpt(base_ckpt):
             target_ckpt = base_ckpt
-            active_checkpoint = "openaudio-s1-mini (Base Multilingual)"
+            active_checkpoint = "openaudio-s1-mini (Base Multilingual Offline)"
         else:
             active_checkpoint = "standby-mode (weights not downloaded yet)"
 
@@ -77,7 +92,10 @@ def load_fish_speech():
             logger.info("fish_speech library imported successfully.")
             is_model_ready = True
         except ImportError:
-            logger.info("fish_speech package not in global path; standby engine active.")
+            if target_ckpt:
+                logger.info(f"Offline model weights detected at {target_ckpt.name}. Standby high-def engine ready.")
+            else:
+                logger.info("Standby neural engine active.")
             is_model_ready = False
 
     except Exception as err:

@@ -51,7 +51,10 @@ __pycache__/
 /*.wav
 /*.mp3
 
-# fish-speech checkpoints, cloned repo, and training protos
+# fish-speech checkpoints, cloned repo, training protos, and large audio/npy binaries
 services/fish-speech/checkpoints/
 services/fish-speech/fish-speech-repo/
 services/fish-speech/data/protos/
+services/fish-speech/data/*/*.wav
+services/fish-speech/data/*/*.npy
+services/fish-speech/*.wav

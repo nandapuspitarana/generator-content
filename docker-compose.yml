@@ -10,9 +10,13 @@ services:
       - "9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,6 +28,10 @@ services:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
       - "5601:5601"
+    deploy:
+      resources:
+        limits:
+          memory: 768M
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -40,9 +48,13 @@ services:
       - "8765:8765"
     volumes:
       - fish_speech_cache:/root/.cache
+    deploy:
+      resources:
+        limits:
+          memory: 2560M
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8765/v1/health || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8765/v1/health || exit 1" ]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -52,4 +64,3 @@ volumes:
     driver: local
   fish_speech_cache:
     driver: local
-

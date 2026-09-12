@@ -26,7 +26,7 @@ if sys.platform == "win32":
 def merge_and_test(lora_ckpt: Path, output_dir: Path, test_text: str):
     root_dir = Path(__file__).resolve().parent.parent
     fish_repo_dir = root_dir / "fish-speech-repo"
-    base_weight = root_dir / "checkpoints" / "openaudio-s1-mini"
+    base_weight = root_dir / "checkpoints" / "fish-speech-1.5"
 
     print("=" * 65)
     print("  🐟 Fish-Speech LoRA Merge & Indonesian Verification")
@@ -45,6 +45,9 @@ def merge_and_test(lora_ckpt: Path, output_dir: Path, test_text: str):
         print("   Place your downloaded checkpoint from Colab into checkpoints/ folder.")
         sys.exit(1)
 
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(fish_repo_dir.resolve()) + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
+
     output_dir.mkdir(parents=True, exist_ok=True)
     merge_cmd = [
         sys.executable,
@@ -55,23 +58,71 @@ def merge_and_test(lora_ckpt: Path, output_dir: Path, test_text: str):
         "--output", str(output_dir.resolve())
     ]
     print(f"Executing: {' '.join(merge_cmd)}")
-    subprocess.run(merge_cmd, check=True)
+    subprocess.run(merge_cmd, env=env, cwd=str(fish_repo_dir), check=True)
     print("✅ Model weights merged successfully!")
 
-    # Test synthesis
-    generate_script = fish_repo_dir / "tools" / "llama" / "generate.py"
-    if generate_script.exists():
-        test_out = root_dir / "test_indonesia_merged.wav"
-        gen_cmd = [
-            sys.executable,
-            str(generate_script),
-            "--text", test_text,
-            "--checkpoint-path", str(output_dir.resolve()),
-            "--output", str(test_out.resolve())
-        ]
+    # Copy firefly decoder generator to output dir for fully self-contained deployment
+    decoder_src = root_dir / "checkpoints" / "fish-speech-1.5" / "firefly-gan-vq-fsq-8x1024-21hz-generator.pth"
+    decoder_dst = output_dir / "firefly-gan-vq-fsq-8x1024-21hz-generator.pth"
+    if decoder_src.exists() and not decoder_dst.exists():
+        import shutil
+        shutil.copy2(decoder_src, decoder_dst)
+        print(f"✅ Copied VQGAN decoder generator to {decoder_dst.resolve()}")
+
+    # Test synthesis using TTSInferenceEngine
+    decoder_ckpt = root_dir / "checkpoints" / "fish-speech-1.5" / "firefly-gan-vq-fsq-8x1024-21hz-generator.pth"
+    if decoder_ckpt.exists():
         print(f"Running test synthesis: {test_text}")
-        subprocess.run(gen_cmd, check=True)
+        test_out = root_dir / "test_indonesia_merged.wav"
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(fish_repo_dir.resolve()) + (os.pathsep + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
+        test_script = f"""
+import soundfile as sf
+import torch
+from pathlib import Path
+from fish_speech.inference_engine import TTSInferenceEngine
+from fish_speech.models.text2semantic.inference import launch_thread_safe_queue
+from fish_speech.models.vqgan.inference import load_model as load_decoder_model
+from fish_speech.utils.schema import ServeTTSRequest
+
+llama_queue = launch_thread_safe_queue(
+    checkpoint_path=r'{output_dir.resolve()}',
+    device='cuda' if torch.cuda.is_available() else 'cpu',
+    precision=torch.bfloat16,
+    compile=False,
+)
+decoder_model = load_decoder_model(
+    config_name='firefly_gan_vq',
+    checkpoint_path=r'{decoder_ckpt.resolve()}',
+    device='cuda' if torch.cuda.is_available() else 'cpu',
+)
+engine = TTSInferenceEngine(
+    llama_queue=llama_queue,
+    decoder_model=decoder_model,
+    precision=torch.bfloat16,
+    compile=False,
+)
+req = ServeTTSRequest(
+    text='{test_text}',
+    references=[],
+    max_new_tokens=256,
+    chunk_length=150,
+    top_p=0.7,
+    repetition_penalty=1.2,
+    temperature=0.7,
+    format='wav',
+)
+results = list(engine.inference(req))
+for r in results:
+    if r.code == 'final' and r.audio is not None:
+        sr, audio_arr = r.audio
+        sf.write(r'{test_out.resolve()}', audio_arr, sr)
+        print('Audio successfully written to file.')
+"""
+        subprocess.run([sys.executable, "-c", test_script], env=env, cwd=str(fish_repo_dir), check=True)
         print(f"🎉 Synthesis success! Test audio saved to: {test_out.resolve()}")
+    else:
+        print(f"Decoder checkpoint not found at {decoder_ckpt.resolve()}, skipping synthesis test.")
 
 
 if __name__ == "__main__":
