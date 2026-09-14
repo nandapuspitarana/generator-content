@@ -36,13 +36,13 @@ tags:
 - pytorch
 - speech-synthesis
 datasets:
-- custom-indonesian-voice
+- agufsamudra/tts-indo
 pipeline_tag: text-to-speech
 ---
 
 # 🐟 Fish-Speech 1.5 - Bahasa Indonesia TTS
 
-Model *Text-to-Speech* (TTS) Bahasa Indonesia berbasis arsitektur **Dual-AR Transformer** dari Fish-Speech 1.5 yang di-*fine-tune* menggunakan LoRA dan kemudian digabungkan secara permanen (*merged weights*).
+Model *Text-to-Speech* (TTS) Bahasa Indonesia berbasis arsitektur **Dual-AR Transformer** dari Fish-Speech 1.5 yang di-*fine-tune* menggunakan LoRA pada hardware GPU lokal NVIDIA RTX 5060 Ti dan kemudian digabungkan secara permanen (*merged weights*).
 
 ## 📊 Detail Pelatihan & Metrik
 
@@ -50,12 +50,11 @@ Model dilatih menggunakan akselerasi GPU lokal NVIDIA RTX 5060 Ti dengan native 
 
 - **Base Model**: Fish-Speech 1.5 (Dual-AR Transformer, 644M parameter)
 - **Neural Vocoder / Tokenizer**: Firefly-GAN VQ (8 codebooks @ 21.5 Hz) + Tiktoken
-- **Dataset**: Rekaman audio percakapan Bahasa Indonesia (24 kHz PCM_16)
+- **Dataset**: [agufsamudra/tts-indo](https://huggingface.co/datasets/agufsamudra/tts-indo) (300 segmen audio percakapan 24 kHz PCM_16)
 - **Hasil Metrik Evaluasi (Step 100)**:
-  - **Total Loss**: `4.1250` (turun dari `7.9062` pada Step 25)
-  - **Top-5 Accuracy**: `63.67%` (naik dari `37.11%` pada Step 25)
-  - **Base Loss**: `1.4609`
-  - **Semantic Loss**: `2.6562`
+  - **Train Loss**: `7.125` (turun dari `8.875` pada Step 1)
+  - **Validation Loss**: `7.006`
+  - **Top-5 Accuracy**: `46.4%` (naik dari `27.9%` pada Step 1)
 
 ---
 
@@ -173,11 +172,19 @@ def push_model(repo_id: str, token: str = None, private: bool = False, model_dir
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Upload Fish-Speech model to Hugging Face Hub")
-    parser.add_argument("--repo-id", type=str, required=True, help="Target HF repo, e.g. username/fish-speech-indonesia")
+    parser.add_argument("--repo-id", type=str, default="nandapuspitarana/fish-speech-1.5-indonesian", help="Target HF repo, e.g. username/fish-speech-indonesia")
     parser.add_argument("--token", type=str, default=None, help="Hugging Face Access Token (or uses saved token)")
     parser.add_argument("--private", action="store_true", help="Set repository to private")
     parser.add_argument("--model-dir", type=str, default=None, help="Path to merged model folder")
     args = parser.parse_args()
 
-    token = args.token or os.environ.get("HF_TOKEN")
+    token = args.token or os.environ.get("HF_TOKEN") or os.environ.get("huggingface_token")
+    if not token:
+        try:
+            import dotenv
+            env_vals = dotenv.dotenv_values(Path(__file__).resolve().parent.parent.parent.parent / ".env")
+            token = env_vals.get("huggingface_token") or env_vals.get("HF_TOKEN")
+        except Exception:
+            pass
+
     push_model(args.repo_id, token, args.private, Path(args.model_dir) if args.model_dir else None)

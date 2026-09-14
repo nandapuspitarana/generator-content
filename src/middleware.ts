@@ -49,8 +49,8 @@ function checkRateLimit(key: string, limit: number, windowMs: number): { allowed
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Only apply rate limiting to API routes
-  if (!pathname.startsWith("/api/")) {
+  // Only apply rate limiting to API routes, skip upload-pdf so large file streaming is not buffered
+  if (!pathname.startsWith("/api/") || pathname.startsWith("/api/knowledge/upload-pdf")) {
     return NextResponse.next()
   }
 

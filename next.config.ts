@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['pdf-parse', '@elastic/elasticsearch'],
+  experimental: {
+    middlewareClientMaxBodySize: '50mb', // Next.js limit for proxy/middleware request bodies
+  },
   images: {
     remotePatterns: [
       {

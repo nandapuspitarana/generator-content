@@ -315,18 +315,258 @@ def generate_silence(duration_sec: float, sample_rate: int = 24000):
     return np.zeros(num_samples, dtype=np.float32)
 
 
-VOICE_MAP = {
-    # Suara Bahasa Indonesia (Native ID)
-    2222: "id-ID-ArdiNeural",                # Ardi Natural (Pria)
-    4444: "id-ID-ArdiNeural",                # Ardi Energik (Pria)
-    6666: "id-ID-GadisNeural",               # Gadis Narasi (Wanita)
-    8888: "id-ID-GadisNeural",               # Gadis Storyteller (Wanita)
-    # Suara English & Multilingual (Bilingual / Code-Switching / Full English Books)
-    1111: "en-US-AndrewMultilingualNeural",  # Andrew Multilingual (Pria - Buku & Podcast)
-    3333: "en-US-EmmaMultilingualNeural",    # Emma Audiobook (Wanita - Narasi Buku Internasional)
-    5555: "en-US-BrianMultilingualNeural",   # Brian Conversational (Pria - Diskusi & Casual)
-    7777: "en-US-AvaMultilingualNeural",     # Ava Storyteller (Wanita - Cerita & Fiksi)
+VOICE_PROFILES = {
+    # 🎙️ Varian Andi / Ardi (Pria - Host Favorit, Sangat Nyaman & Multi-Bahasa)
+    2222: {
+        "voice": "id-ID-ArdiNeural",
+        "name": "Andi Natural (Pria)",
+        "gender": "male",
+        "language": "id",
+        "group": "ardi",
+        "style": "🇮🇩 Casual, Hangat & Percakapan Nyaman",
+        "description": "Sangat nyaman di telinga orang Indonesia, artikulasi fasih untuk istilah lokal & internasional.",
+        "pitch_offset": 0,
+        "rate_offset": 0,
+        "default_speed": 1.0,
+    },
+    4444: {
+        "voice": "id-ID-ArdiNeural",
+        "name": "Andi Energik (Pria)",
+        "gender": "male",
+        "language": "id",
+        "group": "ardi",
+        "style": "🇮🇩 Dinamis, Upbeat & Review Buku",
+        "description": "Penuh semangat untuk topik produktivitas, inovasi, dan review buku self-improvement.",
+        "pitch_offset": 2,
+        "rate_offset": 5,
+        "default_speed": 1.05,
+    },
+    2210: {
+        "voice": "id-ID-ArdiNeural",
+        "name": "Andi Podcaster Santai (Pria)",
+        "gender": "male",
+        "language": "id",
+        "group": "ardi",
+        "style": "🇮🇩 Hangat, Intim & Diskusi Santai",
+        "description": "Gaya ngobrol santai seperti berbicara langsung dengan pendengar.",
+        "pitch_offset": -3,
+        "rate_offset": -2,
+        "default_speed": 0.98,
+    },
+    2220: {
+        "voice": "id-ID-ArdiNeural",
+        "name": "Andi Narator Formal (Pria)",
+        "gender": "male",
+        "language": "id",
+        "group": "ardi",
+        "style": "🇮🇩 Berwibawa, Rapi & Dokumenter",
+        "description": "Intonasi mantap dan profesional untuk ringkasan eksekutif dan materi edukatif.",
+        "pitch_offset": -4,
+        "rate_offset": -4,
+        "default_speed": 0.96,
+    },
+    2230: {
+        "voice": "id-ID-ArdiNeural",
+        "name": "Andi Deep Bass (Pria)",
+        "gender": "male",
+        "language": "id",
+        "group": "ardi",
+        "style": "🇮🇩 Suara Berat, Maskulin & Karismatik",
+        "description": "Resonansi nada rendah yang berkarakter kuat, tenang, dan memikat.",
+        "pitch_offset": -8,
+        "rate_offset": -5,
+        "default_speed": 0.95,
+    },
+
+    # 🌸 Varian Gadis (Wanita - Jernih, Kalem & Storyteller)
+    6666: {
+        "voice": "id-ID-GadisNeural",
+        "name": "Gadis Narasi (Wanita)",
+        "gender": "female",
+        "language": "id",
+        "group": "gadis",
+        "style": "🇮🇩 Kalem, Jelas & Edukasi",
+        "description": "Artikulasi jernih dan tenang, standar emas untuk edukasi dan narasi artikel.",
+        "pitch_offset": 0,
+        "rate_offset": 0,
+        "default_speed": 1.0,
+    },
+    8888: {
+        "voice": "id-ID-GadisNeural",
+        "name": "Gadis Storyteller (Wanita)",
+        "gender": "female",
+        "language": "id",
+        "group": "gadis",
+        "style": "🇮🇩 Dramatis & Storytelling Mendalam",
+        "description": "Penjiwaan emosional mendalam untuk cerita fiksi, memoar, dan narasi puitis.",
+        "pitch_offset": -2,
+        "rate_offset": -5,
+        "default_speed": 0.95,
+    },
+    6610: {
+        "voice": "id-ID-GadisNeural",
+        "name": "Gadis Ceria & Fresh (Wanita)",
+        "gender": "female",
+        "language": "id",
+        "group": "gadis",
+        "style": "🇮🇩 Fresh, Ramah & Upbeat",
+        "description": "Ceria dan bersahabat, cocok untuk podcast gaya muda dan konten kreatif.",
+        "pitch_offset": 3,
+        "rate_offset": 4,
+        "default_speed": 1.04,
+    },
+    6620: {
+        "voice": "id-ID-GadisNeural",
+        "name": "Gadis Lembut (Wanita)",
+        "gender": "female",
+        "language": "id",
+        "group": "gadis",
+        "style": "🇮🇩 Menenangkan, Halus & Bedtime Story",
+        "description": "Suara lembut menenangkan, cocok untuk renungan, self-care, dan konten malam.",
+        "pitch_offset": -3,
+        "rate_offset": -7,
+        "default_speed": 0.92,
+    },
+
+    # 🇮🇩 Suara Nusantara (Khas, Teduh & Sangat Familiar di Telinga Indonesia)
+    2500: {
+        "voice": "jv-ID-DimasNeural",
+        "name": "Dimas Nusantara (Pria)",
+        "gender": "male",
+        "language": "id",
+        "group": "nusantara",
+        "style": "🇮🇩 Teduh, Bersahabat & Santun",
+        "description": "Karakter pria Jawa yang santun, adem, dan sangat bersahaja di telinga pendengar.",
+        "pitch_offset": 0,
+        "rate_offset": -2,
+        "default_speed": 0.98,
+    },
+    6500: {
+        "voice": "jv-ID-SitiNeural",
+        "name": "Siti Ayu (Wanita)",
+        "gender": "female",
+        "language": "id",
+        "group": "nusantara",
+        "style": "🇮🇩 Anggun, Lembut & Tenang",
+        "description": "Karakter wanita Jawa yang santun, halus budi, dan sangat menenangkan.",
+        "pitch_offset": 0,
+        "rate_offset": -2,
+        "default_speed": 0.96,
+    },
+    2600: {
+        "voice": "su-ID-JajangNeural",
+        "name": "Jajang Akrab (Pria)",
+        "gender": "male",
+        "language": "id",
+        "group": "nusantara",
+        "style": "🇮🇩 Ramah, Renyah & Humoris",
+        "description": "Karakter Sunda yang ramah, hangat, dan asik didengar untuk obrolan santai.",
+        "pitch_offset": 0,
+        "rate_offset": 2,
+        "default_speed": 1.02,
+    },
+    6600: {
+        "voice": "su-ID-TutiNeural",
+        "name": "Ibu Tuti (Wanita)",
+        "gender": "female",
+        "language": "id",
+        "group": "nusantara",
+        "style": "🇮🇩 Hangat, Keibuan & Welas Asih",
+        "description": "Sentuhan keibuan yang hangat dan penuh perhatian untuk narasi keluarga & moral.",
+        "pitch_offset": 0,
+        "rate_offset": -2,
+        "default_speed": 0.96,
+    },
+    2700: {
+        "voice": "ms-MY-OsmanNeural",
+        "name": "Osman Elegan (Pria)",
+        "gender": "male",
+        "language": "id",
+        "group": "nusantara",
+        "style": "🇮🇩 Jernih, Rapi & Elegan Serumpun",
+        "description": "Diksi sangat rapi dan formal dengan nuansa Melayu serumpun yang akrab.",
+        "pitch_offset": 0,
+        "rate_offset": 0,
+        "default_speed": 1.0,
+    },
+    6700: {
+        "voice": "ms-MY-YasminNeural",
+        "name": "Yasmin Melati (Wanita)",
+        "gender": "female",
+        "language": "id",
+        "group": "nusantara",
+        "style": "🇮🇩 Manis, Sopan & Jernih",
+        "description": "Artikulasi jernih dan manis, enak didengar untuk audio artikel berdurasi panjang.",
+        "pitch_offset": 0,
+        "rate_offset": -2,
+        "default_speed": 0.98,
+    },
+
+    # 🌐 Multilingual Masters (Bilingual ID-EN, Istilah Asing & Global)
+    1111: {
+        "voice": "en-US-BrianMultilingualNeural",
+        "name": "Andi Multilingual Pro (Pria)",
+        "gender": "male",
+        "language": "en-multi",
+        "group": "multilingual",
+        "style": "🌐 Bilingual Luwes (ID & EN), Sangat Nyaman",
+        "description": "Mampu melafalkan istilah Inggris dan buku asing secara fasih tanpa kehilangan kenyamanan telinga Indonesia.",
+        "pitch_offset": 0,
+        "rate_offset": 0,
+        "default_speed": 1.0,
+    },
+    5555: {
+        "voice": "en-US-BrianMultilingualNeural",
+        "name": "Brian Tech Reviewer (Pria)",
+        "gender": "male",
+        "language": "en-multi",
+        "group": "multilingual",
+        "style": "🌐 Cerdas, Karismatik & Diskusi Tech",
+        "description": "Sangat cocok untuk buku teknologi, sains, bisnis modern, dan istilah asing intensif.",
+        "pitch_offset": -2,
+        "rate_offset": 0,
+        "default_speed": 1.0,
+    },
+    1120: {
+        "voice": "en-AU-WilliamMultilingualNeural",
+        "name": "William Audiobook (Pria)",
+        "gender": "male",
+        "language": "en-multi",
+        "group": "multilingual",
+        "style": "🌐 Internasional, Elegan & Audio Drama",
+        "description": "Standar audiobook internasional dengan vokal bersih dan nada karismatik.",
+        "pitch_offset": 0,
+        "rate_offset": 0,
+        "default_speed": 0.98,
+    },
+    7777: {
+        "voice": "en-US-AvaMultilingualNeural",
+        "name": "Ava Storyteller (Wanita)",
+        "gender": "female",
+        "language": "en-multi",
+        "group": "multilingual",
+        "style": "🌐 Ekspresif, Cerita Fiksi & Bilingual",
+        "description": "Ekspresif dan fleksibel untuk buku fiksi, literatur dunia, dan podcast dwibahasa.",
+        "pitch_offset": 0,
+        "rate_offset": 0,
+        "default_speed": 0.96,
+    },
+    3333: {
+        "voice": "en-US-EmmaMultilingualNeural",
+        "name": "Emma Narator Dunia (Wanita)",
+        "gender": "female",
+        "language": "en-multi",
+        "group": "multilingual",
+        "style": "🌐 Mewah, Berwibawa & Elegan",
+        "description": "Vokal premium untuk buku biografi tokoh dunia dan narasi kelas atas.",
+        "pitch_offset": 0,
+        "rate_offset": -3,
+        "default_speed": 0.95,
+    },
 }
+
+# Backward compatibility map
+VOICE_MAP = {seed: p["voice"] for seed, p in VOICE_PROFILES.items()}
 
 
 async def _synthesize_neural_segment_async(
@@ -366,21 +606,41 @@ def synthesize_segment_neural(
     pitch_str: str = "+0Hz"
 ):
     """
-    Synthesizes authentic, studio-grade spoken Indonesian voice (natural human intonation).
-    Powered by high-definition Indonesian neural voices (id-ID-ArdiNeural / id-ID-GadisNeural).
-    Supports dynamic prosody, volume, and pitch adjustments driven by vocal tags.
+    Synthesizes authentic, studio-grade spoken voice with natural intonation.
+    Selects voice profile by voice_seed and accurately stacks prosodic pitch & rate offsets.
     """
     import asyncio
     import concurrent.futures
 
-    voice = VOICE_MAP.get(voice_seed, "id-ID-ArdiNeural" if (voice_seed or 0) % 2 == 0 else "id-ID-GadisNeural")
-    speed_factor = int(round((speed - 1.0) * 100)) + rate_bonus
+    profile = VOICE_PROFILES.get(voice_seed)
+    if profile:
+        voice = profile["voice"]
+        base_rate_offset = profile.get("rate_offset", 0)
+        base_pitch_offset = profile.get("pitch_offset", 0)
+    else:
+        # Fallback parity matching for arbitrary seeds
+        voice = "id-ID-ArdiNeural" if (voice_seed or 0) % 2 == 0 else "id-ID-GadisNeural"
+        base_rate_offset = 0
+        base_pitch_offset = 0
+
+    speed_factor = int(round((speed - 1.0) * 100)) + rate_bonus + base_rate_offset
     rate_str = f"{speed_factor:+d}%" if speed_factor != 0 else "+0%"
+
+    # Parse segment pitch offset from pitch_str (e.g. "+5Hz", "-15Hz", "+0Hz")
+    seg_pitch_val = 0
+    try:
+        clean_p = pitch_str.replace("Hz", "").replace("hz", "").strip()
+        seg_pitch_val = int(clean_p)
+    except Exception:
+        seg_pitch_val = 0
+
+    total_pitch = base_pitch_offset + seg_pitch_val
+    final_pitch_str = f"{total_pitch:+d}Hz" if total_pitch != 0 else "+0Hz"
 
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(asyncio.run, _synthesize_neural_segment_async(
-                text, voice, rate_str, volume_str, pitch_str
+                text, voice, rate_str, volume_str, final_pitch_str
             ))
             return future.result(timeout=45)
     except Exception as e:
@@ -555,80 +815,18 @@ def get_available_models():
     ]
 
     voices = [
-        # Bahasa Indonesia (Native ID)
         {
-            "seed": 2222,
-            "name": "Ardi Natural (Pria)",
-            "gender": "male",
-            "language": "id",
-            "style": "🇮🇩 Casual, Hangat & Percakapan",
-            "default_speed": 1.0,
-            "voice_id": "id-ID-ArdiNeural"
-        },
-        {
-            "seed": 4444,
-            "name": "Ardi Energik (Pria)",
-            "gender": "male",
-            "language": "id",
-            "style": "🇮🇩 Dinamis, Upbeat & Review Buku",
-            "default_speed": 1.05,
-            "voice_id": "id-ID-ArdiNeural"
-        },
-        {
-            "seed": 6666,
-            "name": "Gadis Narasi (Wanita)",
-            "gender": "female",
-            "language": "id",
-            "style": "🇮🇩 Kalem, Jelas & Edukasi",
-            "default_speed": 1.0,
-            "voice_id": "id-ID-GadisNeural"
-        },
-        {
-            "seed": 8888,
-            "name": "Gadis Storyteller Deep (Wanita)",
-            "gender": "female",
-            "language": "id",
-            "style": "🇮🇩 Dramatis & Storytelling Mendalam",
-            "default_speed": 0.95,
-            "voice_id": "id-ID-GadisNeural"
-        },
-        # English & Multilingual (Buku Asing, Campuran / Code-Switching)
-        {
-            "seed": 1111,
-            "name": "Andrew Multilingual (Pria)",
-            "gender": "male",
-            "language": "en-multi",
-            "style": "🌐 Pelafalan Inggris Fasih & Buku Campuran",
-            "default_speed": 1.0,
-            "voice_id": "en-US-AndrewMultilingualNeural"
-        },
-        {
-            "seed": 3333,
-            "name": "Emma Audiobook (Wanita)",
-            "gender": "female",
-            "language": "en-multi",
-            "style": "🌐 Narator Buku Internasional & Elegan",
-            "default_speed": 0.95,
-            "voice_id": "en-US-EmmaMultilingualNeural"
-        },
-        {
-            "seed": 5555,
-            "name": "Brian Conversational (Pria)",
-            "gender": "male",
-            "language": "en-multi",
-            "style": "🌐 Diskusi Santai & Tech Review",
-            "default_speed": 1.0,
-            "voice_id": "en-US-BrianMultilingualNeural"
-        },
-        {
-            "seed": 7777,
-            "name": "Ava Storyteller (Wanita)",
-            "gender": "female",
-            "language": "en-multi",
-            "style": "🌐 Cerita Fiksi & Narasi Ekspresif",
-            "default_speed": 0.95,
-            "voice_id": "en-US-AvaMultilingualNeural"
+            "seed": seed,
+            "name": p["name"],
+            "gender": p["gender"],
+            "language": p["language"],
+            "group": p.get("group", "multilingual"),
+            "style": p["style"],
+            "description": p.get("description", ""),
+            "default_speed": p.get("default_speed", 1.0),
+            "voice_id": p["voice"],
         }
+        for seed, p in VOICE_PROFILES.items()
     ]
 
     return {

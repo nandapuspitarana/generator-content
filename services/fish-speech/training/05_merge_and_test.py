@@ -127,9 +127,31 @@ for r in results:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Merge LoRA and test Fish-Speech")
-    parser.add_argument("--lora-checkpoint", type=str, default=str(Path(__file__).resolve().parent.parent / "checkpoints" / "indonesia-lora.ckpt"))
-    parser.add_argument("--output", type=str, default=str(Path(__file__).resolve().parent.parent / "checkpoints" / "indonesia-tts-merged"))
+    parser.add_argument("--lora-checkpoint", type=str, default=None)
+    parser.add_argument("--output", type=str, default=str(Path(__file__).resolve().parent.parent / "checkpoints" / "indonesia-tts-local-merged"))
     parser.add_argument("--test-text", type=str, default="Halo semua! Ini adalah suara hasil fine-tuning model Fish-Speech Bahasa Indonesia.")
     args = parser.parse_args()
 
-    merge_and_test(Path(args.lora_checkpoint), Path(args.output), args.test_text)
+    ckpt_path = None
+    if args.lora_checkpoint and Path(args.lora_checkpoint).exists():
+        ckpt_path = Path(args.lora_checkpoint)
+    else:
+        root_dir = Path(__file__).resolve().parent.parent
+        candidates = []
+        for d in [
+            root_dir / "fish-speech-repo" / "results" / "indonesia-tts-rtx5060" / "checkpoints",
+            root_dir / "fish-speech-repo" / "results" / "indonesia-tts-local" / "checkpoints",
+            root_dir / "checkpoints",
+        ]:
+            if d.exists():
+                candidates.extend(list(d.glob("*.ckpt")))
+        if candidates:
+            candidates.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+            ckpt_path = candidates[0]
+            print(f"🔍 Auto-detected latest checkpoint: {ckpt_path.resolve()}")
+        elif args.lora_checkpoint:
+            ckpt_path = Path(args.lora_checkpoint)
+        else:
+            ckpt_path = root_dir / "checkpoints" / "indonesia-lora.ckpt"
+
+    merge_and_test(ckpt_path, Path(args.output), args.test_text)

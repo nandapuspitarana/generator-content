@@ -47,14 +47,18 @@ __pycache__/
 *$py.class
 .pytest_cache/
 
+# database
+*.db
+*.db-journal
+prisma/*.db
+prisma/*.db-journal
+
 # audio test files in root
 /*.wav
 /*.mp3
 
-# fish-speech checkpoints, cloned repo, training protos, and large audio/npy binaries
+# fish-speech checkpoints, cloned repo, training data, and large binaries
 services/fish-speech/checkpoints/
 services/fish-speech/fish-speech-repo/
-services/fish-speech/data/protos/
-services/fish-speech/data/*/*.wav
-services/fish-speech/data/*/*.npy
+services/fish-speech/data/
 services/fish-speech/*.wav

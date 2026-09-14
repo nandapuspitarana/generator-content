@@ -44,7 +44,9 @@ interface VoiceOption {
   name: string;
   gender: "male" | "female";
   language?: "id" | "en-multi";
+  group?: "ardi" | "gadis" | "nusantara" | "multilingual";
   style: string;
+  description?: string;
   default_speed?: number;
 }
 
@@ -73,29 +75,67 @@ const DEFAULT_MODELS: ModelCheckpointOption[] = [
 ];
 
 const DEFAULT_VOICES: VoiceOption[] = [
-  // 🇮🇩 Bahasa Indonesia
+  // 🎙️ Varian Andi / Ardi (Pria - Host Favorit, Sangat Nyaman & Multi-Bahasa)
   {
     seed: 2222,
-    name: "Ardi Natural (Pria)",
+    name: "Andi Natural (Pria)",
     gender: "male",
     language: "id",
-    style: "Casual, Hangat & Percakapan",
+    group: "ardi",
+    style: "Casual, Hangat & Percakapan Nyaman",
+    description: "Sangat nyaman di telinga orang Indonesia, artikulasi fasih untuk istilah lokal & internasional.",
     default_speed: 1.0,
   },
   {
     seed: 4444,
-    name: "Ardi Energik (Pria)",
+    name: "Andi Energik (Pria)",
     gender: "male",
     language: "id",
+    group: "ardi",
     style: "Dinamis, Upbeat & Review Buku",
+    description: "Penuh semangat untuk topik produktivitas, inovasi, dan review buku self-improvement.",
     default_speed: 1.05,
   },
+  {
+    seed: 2210,
+    name: "Andi Podcaster Santai (Pria)",
+    gender: "male",
+    language: "id",
+    group: "ardi",
+    style: "Hangat, Intim & Diskusi Santai",
+    description: "Gaya ngobrol santai seperti berbicara langsung dengan pendengar di ruang santai.",
+    default_speed: 0.98,
+  },
+  {
+    seed: 2220,
+    name: "Andi Narator Formal (Pria)",
+    gender: "male",
+    language: "id",
+    group: "ardi",
+    style: "Berwibawa, Rapi & Dokumenter",
+    description: "Intonasi mantap dan profesional untuk ringkasan eksekutif dan materi edukatif.",
+    default_speed: 0.96,
+  },
+  {
+    seed: 2230,
+    name: "Andi Deep Bass (Pria)",
+    gender: "male",
+    language: "id",
+    group: "ardi",
+    style: "Suara Berat, Maskulin & Karismatik",
+    description: "Resonansi nada rendah yang berkarakter kuat, tenang, dan memikat.",
+    default_speed: 0.95,
+  },
+
+  // 🌸 Varian Gadis (Wanita - Jernih, Kalem, Storyteller)
   {
     seed: 6666,
     name: "Gadis Narasi (Wanita)",
     gender: "female",
     language: "id",
+    group: "gadis",
     style: "Kalem, Jelas & Edukasi",
+    description: "Artikulasi jernih dan tenang, standar emas untuk edukasi dan narasi artikel.",
     default_speed: 1.0,
   },
   {
@@ -103,40 +143,143 @@ const DEFAULT_VOICES: VoiceOption[] = [
     name: "Gadis Storyteller (Wanita)",
     gender: "female",
     language: "id",
+    group: "gadis",
     style: "Dramatis & Storytelling Mendalam",
+    description: "Penjiwaan emosional mendalam untuk cerita fiksi, memoar, dan narasi puitis.",
     default_speed: 0.95,
   },
-  // 🌐 English & Multilingual (Buku Asing, Campuran & Code-Switching)
   {
-    seed: 1111,
-    name: "Andrew Multilingual (Pria)",
+    seed: 6610,
+    name: "Gadis Ceria & Fresh (Wanita)",
+    gender: "female",
+    language: "id",
+    group: "gadis",
+    style: "Fresh, Ramah & Upbeat",
+    description: "Ceria dan bersahabat, cocok untuk podcast gaya muda dan konten kreatif.",
+    default_speed: 1.04,
+  },
+  {
+    seed: 6620,
+    name: "Gadis Lembut (Wanita)",
+    gender: "female",
+    language: "id",
+    group: "gadis",
+    style: "Menenangkan, Halus & Bedtime Story",
+    description: "Suara lembut menenangkan, cocok untuk renungan, self-care, dan konten malam.",
+    default_speed: 0.92,
+  },
+
+  // 🇮🇩 Suara Nusantara (Khas, Teduh & Sangat Familiar di Telinga Indonesia)
+  {
+    seed: 2500,
+    name: "Dimas Nusantara (Pria)",
     gender: "male",
-    language: "en-multi",
-    style: "Pelafalan Inggris Fasih & Buku Campuran",
+    language: "id",
+    group: "nusantara",
+    style: "Teduh, Bersahabat & Santun",
+    description: "Karakter pria Jawa yang santun, adem, dan sangat bersahaja di telinga pendengar.",
+    default_speed: 0.98,
+  },
+  {
+    seed: 6500,
+    name: "Siti Ayu (Wanita)",
+    gender: "female",
+    language: "id",
+    group: "nusantara",
+    style: "Anggun, Lembut & Tenang",
+    description: "Karakter wanita Jawa yang santun, halus budi, dan sangat menenangkan.",
+    default_speed: 0.96,
+  },
+  {
+    seed: 2600,
+    name: "Jajang Akrab (Pria)",
+    gender: "male",
+    language: "id",
+    group: "nusantara",
+    style: "Ramah, Renyah & Humoris",
+    description: "Karakter Sunda yang ramah, hangat, dan asik didengar untuk obrolan santai.",
+    default_speed: 1.02,
+  },
+  {
+    seed: 6600,
+    name: "Ibu Tuti (Wanita)",
+    gender: "female",
+    language: "id",
+    group: "nusantara",
+    style: "Hangat, Keibuan & Welas Asih",
+    description: "Sentuhan keibuan yang hangat dan penuh perhatian untuk narasi keluarga & moral.",
+    default_speed: 0.96,
+  },
+  {
+    seed: 2700,
+    name: "Osman Elegan (Pria)",
+    gender: "male",
+    language: "id",
+    group: "nusantara",
+    style: "Jernih, Rapi & Elegan Serumpun",
+    description: "Diksi sangat rapi dan formal dengan nuansa Melayu serumpun yang akrab.",
     default_speed: 1.0,
   },
   {
-    seed: 3333,
-    name: "Emma Audiobook (Wanita)",
+    seed: 6700,
+    name: "Yasmin Melati (Wanita)",
     gender: "female",
+    language: "id",
+    group: "nusantara",
+    style: "Manis, Sopan & Jernih",
+    description: "Artikulasi jernih dan manis, enak didengar untuk audio artikel berdurasi panjang.",
+    default_speed: 0.98,
+  },
+
+  // 🌐 Multilingual Masters (Bilingual ID-EN, Istilah Asing & Global)
+  {
+    seed: 1111,
+    name: "Andi Multilingual Pro (Pria)",
+    gender: "male",
     language: "en-multi",
-    style: "Narator Buku Internasional & Elegan",
-    default_speed: 0.95,
+    group: "multilingual",
+    style: "Bilingual Luwes (ID & EN), Sangat Nyaman",
+    description: "Mampu melafalkan istilah Inggris dan buku asing secara fasih tanpa kehilangan kenyamanan telinga Indonesia.",
+    default_speed: 1.0,
   },
   {
     seed: 5555,
-    name: "Brian Conversational (Pria)",
+    name: "Brian Tech Reviewer (Pria)",
     gender: "male",
     language: "en-multi",
-    style: "Diskusi Santai & Tech Review",
+    group: "multilingual",
+    style: "Cerdas, Karismatik & Diskusi Tech",
+    description: "Sangat cocok untuk buku teknologi, sains, bisnis modern, dan istilah asing intensif.",
     default_speed: 1.0,
+  },
+  {
+    seed: 1120,
+    name: "William Audiobook (Pria)",
+    gender: "male",
+    language: "en-multi",
+    group: "multilingual",
+    style: "Internasional, Elegan & Audio Drama",
+    description: "Standar audiobook internasional dengan vokal bersih dan nada karismatik.",
+    default_speed: 0.98,
   },
   {
     seed: 7777,
     name: "Ava Storyteller (Wanita)",
     gender: "female",
     language: "en-multi",
-    style: "Cerita Fiksi & Narasi Ekspresif",
+    group: "multilingual",
+    style: "Ekspresif, Cerita Fiksi & Bilingual",
+    description: "Ekspresif dan fleksibel untuk buku fiksi, literatur dunia, dan podcast dwibahasa.",
+    default_speed: 0.96,
+  },
+  {
+    seed: 3333,
+    name: "Emma Narator Dunia (Wanita)",
+    gender: "female",
+    language: "en-multi",
+    group: "multilingual",
+    style: "Mewah, Berwibawa & Elegan",
+    description: "Vokal premium untuk buku biografi tokoh dunia dan narasi kelas atas.",
     default_speed: 0.95,
   },
 ];
@@ -585,23 +728,42 @@ export function AudioPlayerModal({
                 value={DEFAULT_VOICES.some((v) => v.seed === voiceSeed) ? voiceSeed : "custom"}
                 onChange={(e) => {
                   if (e.target.value !== "custom") {
-                    setVoiceSeed(Number(e.target.value));
+                    const newSeed = Number(e.target.value);
+                    setVoiceSeed(newSeed);
+                    const selected = DEFAULT_VOICES.find((v) => v.seed === newSeed);
+                    if (selected?.default_speed) {
+                      setSpeed(selected.default_speed);
+                    }
                   }
                 }}
                 disabled={isLoading}
                 className="w-full h-10 px-3 rounded-xl bg-[#faf9f6] border border-[#e8e7e0] text-xs font-medium text-[#191919] outline-none focus:border-[#191919] cursor-pointer"
               >
-                <optgroup label="🇮🇩 Bahasa Indonesia">
-                  {DEFAULT_VOICES.filter((v) => v.language === "id").map((v) => (
+                <optgroup label="🎙️ Varian Andi / Ardi (Pria - Host Favorit & Multi-Bahasa)">
+                  {DEFAULT_VOICES.filter((v) => v.group === "ardi").map((v) => (
                     <option key={v.seed} value={v.seed}>
-                      {v.name} ({v.style})
+                      👨 {v.name} — {v.style}
                     </option>
                   ))}
                 </optgroup>
-                <optgroup label="🌐 English & Multilingual (Buku Asing & Campuran)">
-                  {DEFAULT_VOICES.filter((v) => v.language === "en-multi").map((v) => (
+                <optgroup label="🌸 Varian Gadis (Wanita - Edukasi & Storyteller)">
+                  {DEFAULT_VOICES.filter((v) => v.group === "gadis").map((v) => (
                     <option key={v.seed} value={v.seed}>
-                      {v.name} ({v.style})
+                      👩 {v.name} — {v.style}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🇮🇩 Suara Nusantara (Teduh, Santun & Ramah)">
+                  {DEFAULT_VOICES.filter((v) => v.group === "nusantara").map((v) => (
+                    <option key={v.seed} value={v.seed}>
+                      {v.gender === "female" ? "👩" : "👨"} {v.name} — {v.style}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🌐 Multilingual Masters (Bilingual ID-EN & Global)">
+                  {DEFAULT_VOICES.filter((v) => v.group === "multilingual").map((v) => (
+                    <option key={v.seed} value={v.seed}>
+                      {v.gender === "female" ? "👩" : "👨"} {v.name} — {v.style}
                     </option>
                   ))}
                 </optgroup>
@@ -609,6 +771,22 @@ export function AudioPlayerModal({
                   <option value="custom">Custom Voice Seed ({voiceSeed})</option>
                 )}
               </select>
+
+              {/* Voice Persona Description Badge */}
+              {(() => {
+                const currentVoice = DEFAULT_VOICES.find((v) => v.seed === voiceSeed);
+                if (currentVoice) {
+                  return (
+                    <div className="p-2 rounded-lg bg-[#f0f4f8] border border-[#d9e2ec] text-[11px] text-[#334e68] leading-tight flex items-start gap-1.5">
+                      <span className="font-semibold shrink-0 text-[#102a43]">
+                        {currentVoice.gender === "female" ? "👩" : "👨"} {currentVoice.name}:
+                      </span>
+                      <span>{currentVoice.description || currentVoice.style}</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
 

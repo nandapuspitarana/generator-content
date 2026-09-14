@@ -220,6 +220,7 @@ def start_tts_service() -> subprocess.Popen:
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
     env["PORT"] = str(PORT_TTS)
+    env["RELOAD"] = "true"
 
     proc = subprocess.Popen(
         [sys.executable, str(TTS_ENTRY)],

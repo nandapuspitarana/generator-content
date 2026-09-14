@@ -33,7 +33,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger("dataset_preparator")
 
 TARGET_SAMPLE_RATE = 24000  # Required by Fish-Speech VQ-GAN / DAC codec
-DATASET_REPO = "X-lord/Dataset-Text-To-Speech-Indonesia"
+DEFAULT_DATASET_REPO = "agufsamudra/tts-indo"
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data" / "Speaker_Indonesia"
 
 
@@ -68,7 +68,9 @@ def resample_and_normalize_audio(audio_bytes: bytes, target_sr: int = TARGET_SAM
 def download_and_process_dataset(
     output_dir: Path,
     limit: int = 50,
-    all_records: bool = False
+    all_records: bool = False,
+    dataset_repo: str = DEFAULT_DATASET_REPO,
+    speaker_name: str = "Speaker_Indonesia"
 ):
     """
     Downloads parquet files from HuggingFace, extracts audio and text,
@@ -84,23 +86,27 @@ def download_and_process_dataset(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Target directory: {output_dir.resolve()}")
-    logger.info(f"Connecting to HuggingFace repository: {DATASET_REPO}...")
+    logger.info(f"Connecting to HuggingFace repository: {dataset_repo}...")
 
     api = HfApi()
     try:
-        repo_files = api.list_repo_files(DATASET_REPO, repo_type="dataset")
+        repo_files = api.list_repo_files(dataset_repo, repo_type="dataset")
     except Exception as e:
-        logger.error(f"Failed to fetch file list from HuggingFace: {e}")
+        logger.error(f"Failed to fetch file list from HuggingFace repository '{dataset_repo}': {e}")
         sys.exit(1)
 
-    parquet_files = sorted([f for f in repo_files if f.startswith("data/train-") and f.endswith(".parquet")])
+    # Match train parquet partitions (e.g. data/train-*.parquet or default/*/*.parquet or *.parquet)
+    parquet_files = sorted([f for f in repo_files if ("train" in f or "default" in f) and f.endswith(".parquet")])
     if not parquet_files:
-        logger.error("No train parquet files found in dataset repository.")
+        parquet_files = sorted([f for f in repo_files if f.endswith(".parquet")])
+
+    if not parquet_files:
+        logger.error(f"No parquet files found in dataset repository '{dataset_repo}'.")
         sys.exit(1)
 
-    logger.info(f"Found {len(parquet_files)} parquet partition files in dataset.")
+    logger.info(f"Found {len(parquet_files)} parquet partition files in dataset '{dataset_repo}'.")
     target_count = float("inf") if all_records else limit
-    logger.info(f"Target count: {'ALL (~4,531)' if all_records else limit} audio segments.")
+    logger.info(f"Target count: {'ALL' if all_records else limit} audio segments.")
 
     processed_count = 0
     total_duration_sec = 0.0
@@ -112,7 +118,7 @@ def download_and_process_dataset(
 
         logger.info(f"Downloading partition: {parquet_name}...")
         try:
-            local_parquet_path = hf_hub_download(DATASET_REPO, parquet_name, repo_type="dataset")
+            local_parquet_path = hf_hub_download(dataset_repo, parquet_name, repo_type="dataset")
         except Exception as err:
             logger.error(f"Error downloading {parquet_name}: {err}")
             continue
@@ -146,6 +152,10 @@ def download_and_process_dataset(
                 # Resample and normalize to 24kHz
                 processed_audio, sample_rate, duration = resample_and_normalize_audio(audio_bytes, TARGET_SAMPLE_RATE)
 
+                # Skip extremely short clips (< 0.4s) or excessively long clips (> 30s)
+                if duration < 0.4 or duration > 30.0:
+                    continue
+
                 seg_id = f"segment_{processed_count + 1:05d}"
                 wav_filename = f"{seg_id}.wav"
                 lab_filename = f"{seg_id}.lab"
@@ -172,7 +182,7 @@ def download_and_process_dataset(
                     "sample_rate": sample_rate
                 })
 
-                if processed_count % 10 == 0 or processed_count == target_count:
+                if processed_count % 25 == 0 or processed_count == target_count:
                     logger.info(f"Processed [{processed_count}/{int(target_count) if target_count != float('inf') else '?'}] segments ({total_duration_sec/60:.1f} minutes of audio)")
 
             except Exception as seg_err:
@@ -182,9 +192,9 @@ def download_and_process_dataset(
     # Write summary manifest
     manifest_path = output_dir.parent / "dataset_manifest.json"
     summary = {
-        "dataset_name": DATASET_REPO,
+        "dataset_name": dataset_repo,
         "language": "id",
-        "speaker": "Speaker_Indonesia",
+        "speaker": speaker_name,
         "sample_rate": TARGET_SAMPLE_RATE,
         "format": "WAV (PCM_16) + .lab",
         "total_segments": processed_count,
@@ -199,6 +209,7 @@ def download_and_process_dataset(
 
     print("\n" + "=" * 65)
     print("  🎉 Dataset Preparation Complete!")
+    print(f"  Dataset Source:    {dataset_repo}")
     print(f"  Total Segments:    {processed_count}")
     print(f"  Total Duration:    {total_duration_sec/60:.2f} mins ({total_duration_sec/3600:.2f} hours)")
     print(f"  Sample Rate:       {TARGET_SAMPLE_RATE} Hz (Ready for Fish-Speech)")
@@ -208,14 +219,18 @@ def download_and_process_dataset(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Download and prepare X-lord Indonesian TTS dataset for Fish-Speech")
-    parser.add_argument("--sample", type=int, default=20, help="Number of samples to process (default: 20)")
-    parser.add_argument("--all", action="store_true", help="Download and process all 4,531 segments (~16.4 hours)")
+    parser = argparse.ArgumentParser(description="Download and prepare Indonesian TTS dataset for Fish-Speech")
+    parser.add_argument("--repo", type=str, default=DEFAULT_DATASET_REPO, help=f"HuggingFace dataset repository (default: {DEFAULT_DATASET_REPO})")
+    parser.add_argument("--sample", type=int, default=50, help="Number of samples to process (default: 50)")
+    parser.add_argument("--all", action="store_true", help="Download and process all available dataset segments")
     parser.add_argument("--output", type=str, default=str(DEFAULT_OUTPUT_DIR), help="Output directory for .wav and .lab files")
+    parser.add_argument("--speaker", type=str, default="Speaker_Indonesia", help="Speaker identifier tag")
 
     args = parser.parse_args()
     download_and_process_dataset(
         output_dir=Path(args.output),
         limit=args.sample,
-        all_records=args.all
+        all_records=args.all,
+        dataset_repo=args.repo,
+        speaker_name=args.speaker
     )

@@ -74,11 +74,14 @@ def stage_download_base():
     run_command([sys.executable, str(script)])
 
 
-def stage_download_dataset():
+def stage_download_dataset(sample: int = 500, all_samples: bool = False, repo: str = "agufsamudra/tts-indo"):
     """Download and segment Indonesian speech dataset."""
-    print("\n▶ [Stage 1] Menyiapkan Dataset Audio Suara Bahasa Indonesia...")
+    print(f"\n▶ [Stage 1] Menyiapkan Dataset Audio Suara Bahasa Indonesia ({repo})...")
     script = TRAINING_DIR / "01_download_dataset.py"
-    run_command([sys.executable, str(script)], cwd=TRAINING_DIR)
+    cmd = [sys.executable, str(script), "--repo", repo, "--sample", str(sample)]
+    if all_samples:
+        cmd.append("--all")
+    run_command(cmd, cwd=TRAINING_DIR)
 
 
 def stage_extract_vq():
@@ -109,14 +112,24 @@ def stage_train_lora(max_steps: int = 100, val_interval: int = 25):
 def stage_merge_and_test(test_text: str = None):
     """Merge LoRA weights into base model and synthesize test audio."""
     print("\n▶ [Stage 5] Penggabungan Bobot LoRA & Uji Coba Sintesis Audio...")
-    ckpt_dir = BASE_DIR / "fish-speech-repo" / "results" / "indonesia-tts-local" / "checkpoints"
-    ckpts = sorted(list(ckpt_dir.glob("*.ckpt")), reverse=True) if ckpt_dir.exists() else []
+    possible_dirs = [
+        BASE_DIR / "fish-speech-repo" / "results" / "indonesia-tts-rtx5060" / "checkpoints",
+        BASE_DIR / "fish-speech-repo" / "results" / "indonesia-tts-local" / "checkpoints",
+    ]
+    ckpts = []
+    for d in possible_dirs:
+        if d.exists():
+            ckpts.extend(list(d.glob("*.ckpt")))
 
     if not ckpts:
-        print("❌ Error: Checkpoint LoRA tidak ditemukan di results/indonesia-tts-local/checkpoints/")
+        print("❌ Error: Checkpoint LoRA tidak ditemukan di folder results/*/checkpoints/")
         sys.exit(1)
 
+    # Sort by modification time descending
+    ckpts.sort(key=lambda f: f.stat().st_mtime, reverse=True)
     latest_ckpt = ckpts[0]
+    print(f"📦 Checkpoint LoRA terbaru yang dipilih: {latest_ckpt}")
+
     out_dir = CHECKPOINTS_DIR / "indonesia-tts-local-merged"
     script = TRAINING_DIR / "05_merge_and_test.py"
     cmd = [
@@ -231,6 +244,9 @@ def main():
     parser.add_argument("--stage", type=str, choices=[
         "base", "dataset", "vq", "proto", "train", "merge", "push", "pull", "serve", "all"
     ], help="Stage name to execute non-interactively")
+    parser.add_argument("--dataset-repo", type=str, default="agufsamudra/tts-indo", help="Hugging Face dataset repository")
+    parser.add_argument("--sample", type=int, default=500, help="Number of audio samples to prepare (default: 500)")
+    parser.add_argument("--all-samples", action="store_true", help="Prepare all samples from dataset")
     parser.add_argument("--max-steps", type=int, default=100, help="Max steps for training")
     parser.add_argument("--val-interval", type=int, default=25, help="Validation interval")
     parser.add_argument("--repo-id", type=str, default=HF_REPO_ID, help="Hugging Face repo ID")
@@ -246,7 +262,7 @@ def main():
         if args.stage == "base":
             stage_download_base()
         elif args.stage == "dataset":
-            stage_download_dataset()
+            stage_download_dataset(sample=args.sample, all_samples=args.all_samples, repo=args.dataset_repo)
         elif args.stage == "vq":
             stage_extract_vq()
         elif args.stage == "proto":
@@ -264,7 +280,7 @@ def main():
             stage_serve(port=args.port)
         elif args.stage == "all":
             stage_download_base()
-            stage_download_dataset()
+            stage_download_dataset(sample=args.sample, all_samples=args.all_samples, repo=args.dataset_repo)
             stage_extract_vq()
             stage_build_proto()
             stage_train_lora(args.max_steps, args.val_interval)
