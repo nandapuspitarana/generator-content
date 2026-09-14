@@ -37,12 +37,17 @@ tags:
 - speech-synthesis
 datasets:
 - agufsamudra/tts-indo
+- X-lord/Dataset-Text-To-Speech-Indonesia
 pipeline_tag: text-to-speech
 ---
 
-# 🐟 Fish-Speech 1.5 - Bahasa Indonesia TTS
+# 🐟 Fish-Speech 1.5 - Bahasa Indonesia TTS (Dual-Dataset Edition)
 
-Model *Text-to-Speech* (TTS) Bahasa Indonesia berbasis arsitektur **Dual-AR Transformer** dari Fish-Speech 1.5 yang di-*fine-tune* menggunakan LoRA pada hardware GPU lokal NVIDIA RTX 5060 Ti dan kemudian digabungkan secara permanen (*merged weights*).
+Model *Text-to-Speech* (TTS) Bahasa Indonesia berbasis arsitektur **Dual-AR Transformer** dari Fish-Speech 1.5 yang di-*fine-tune* menggunakan LoRA pada GPU lokal **NVIDIA GeForce RTX 5060 Ti 16GB** dan kemudian digabungkan secara permanen (*merged weights*).
+
+Model ini menggabungkan dua dataset utama Bahasa Indonesia:
+1. **Percakapan & Dialog Natural** ([agufsamudra/tts-indo](https://huggingface.co/datasets/agufsamudra/tts-indo)) — membuat diksi dan intonasi kasual sangat luwes dan tidak kaku.
+2. **Audiobook, Sastra & Diksi Formal** ([X-lord/Dataset-Text-To-Speech-Indonesia](https://huggingface.co/datasets/X-lord/Dataset-Text-To-Speech-Indonesia)) — memberikan artikulasi yang jernih, berwibawa, dan sangat nyaman untuk pembacaan buku atau artikel panjang.
 
 ## 📊 Detail Pelatihan & Metrik
 
@@ -50,11 +55,12 @@ Model dilatih menggunakan akselerasi GPU lokal NVIDIA RTX 5060 Ti dengan native 
 
 - **Base Model**: Fish-Speech 1.5 (Dual-AR Transformer, 644M parameter)
 - **Neural Vocoder / Tokenizer**: Firefly-GAN VQ (8 codebooks @ 21.5 Hz) + Tiktoken
-- **Dataset**: [agufsamudra/tts-indo](https://huggingface.co/datasets/agufsamudra/tts-indo) (300 segmen audio percakapan 24 kHz PCM_16)
+- **Dataset**: Gabungan 600 segmen audio (1.26 jam audio berkualitas tinggi, 24 kHz PCM_16)
 - **Hasil Metrik Evaluasi (Step 100)**:
-  - **Train Loss**: `7.125` (turun dari `8.875` pada Step 1)
-  - **Validation Loss**: `7.006`
-  - **Top-5 Accuracy**: `46.4%` (naik dari `27.9%` pada Step 1)
+  - **Train Loss**: `7.375`
+  - **Validation Loss**: `7.159`
+  - **Top-5 Accuracy**: `49.0%`
+  - **Arsitektur**: Multi-group Dual-AR Transformer
 
 ---
 

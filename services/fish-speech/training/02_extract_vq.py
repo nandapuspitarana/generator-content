@@ -72,8 +72,8 @@ def run_vq_extraction(data_dir: Path, batch_size: int = 4, checkpoint_path: str 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract VQ tokens from prepared dataset")
-    parser.add_argument("--data-dir", type=str, default=str(Path(__file__).resolve().parent.parent / "data" / "Speaker_Indonesia"))
-    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--data-dir", type=str, default=str(Path(__file__).resolve().parent.parent / "data"))
+    parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--checkpoint", type=str, default=None)
     args = parser.parse_args()
 

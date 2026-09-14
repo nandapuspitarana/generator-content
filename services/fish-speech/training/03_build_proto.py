@@ -64,7 +64,7 @@ def build_protobuf_dataset(input_dir: Path, output_dir: Path, num_workers: int =
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pack dataset into Protobuf format")
-    parser.add_argument("--input", type=str, default=str(Path(__file__).resolve().parent.parent / "data" / "Speaker_Indonesia"))
+    parser.add_argument("--input", type=str, default=str(Path(__file__).resolve().parent.parent / "data"))
     parser.add_argument("--output", type=str, default=str(Path(__file__).resolve().parent.parent / "data" / "protos"))
     parser.add_argument("--workers", type=int, default=2)
     args = parser.parse_args()

@@ -74,13 +74,17 @@ def stage_download_base():
     run_command([sys.executable, str(script)])
 
 
-def stage_download_dataset(sample: int = 500, all_samples: bool = False, repo: str = "agufsamudra/tts-indo"):
-    """Download and segment Indonesian speech dataset."""
-    print(f"\n▶ [Stage 1] Menyiapkan Dataset Audio Suara Bahasa Indonesia ({repo})...")
+def stage_download_dataset(sample: int = 300, all_samples: bool = False, repo: str = "agufsamudra/tts-indo", combine: bool = True):
+    """Download and segment Indonesian speech dataset (supports combining dual datasets)."""
     script = TRAINING_DIR / "01_download_dataset.py"
-    cmd = [sys.executable, str(script), "--repo", repo, "--sample", str(sample)]
-    if all_samples:
-        cmd.append("--all")
+    if combine:
+        print(f"\n▶ [Stage 1] Menyiapkan & Menggabungkan Dual Dataset Indonesia (agufsamudra/tts-indo + X-lord)...")
+        cmd = [sys.executable, str(script), "--combine", "--sample", str(sample)]
+    else:
+        print(f"\n▶ [Stage 1] Menyiapkan Dataset Audio Suara Bahasa Indonesia ({repo})...")
+        cmd = [sys.executable, str(script), "--repo", repo, "--sample", str(sample)]
+        if all_samples:
+            cmd.append("--all")
     run_command(cmd, cwd=TRAINING_DIR)
 
 

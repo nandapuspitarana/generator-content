@@ -190,7 +190,7 @@ def download_and_process_dataset(
                 continue
 
     # Write summary manifest
-    manifest_path = output_dir.parent / "dataset_manifest.json"
+    manifest_path = output_dir.parent / f"manifest_{speaker_name}.json"
     summary = {
         "dataset_name": dataset_repo,
         "language": "id",
@@ -210,12 +210,79 @@ def download_and_process_dataset(
     print("\n" + "=" * 65)
     print("  🎉 Dataset Preparation Complete!")
     print(f"  Dataset Source:    {dataset_repo}")
+    print(f"  Speaker:           {speaker_name}")
     print(f"  Total Segments:    {processed_count}")
     print(f"  Total Duration:    {total_duration_sec/60:.2f} mins ({total_duration_sec/3600:.2f} hours)")
     print(f"  Sample Rate:       {TARGET_SAMPLE_RATE} Hz (Ready for Fish-Speech)")
     print(f"  Output Directory:  {output_dir.resolve()}")
     print(f"  Manifest File:     {manifest_path.resolve()}")
     print("=" * 65 + "\n")
+    return processed_count, total_duration_sec
+
+
+def download_combined_datasets(sample_per_dataset: int = 300):
+    """
+    Downloads and combines both Indonesian datasets:
+    1. agufsamudra/tts-indo -> Speaker_Conversational (Conversational & Modern)
+    2. X-lord/Dataset-Text-To-Speech-Indonesia -> Speaker_Audiobook (Literary & Formal)
+    """
+    data_dir = Path(__file__).resolve().parent.parent / "data"
+    conv_dir = data_dir / "Speaker_Conversational"
+    book_dir = data_dir / "Speaker_Audiobook"
+
+    # Remove old single Speaker_Indonesia if present
+    old_speaker = data_dir / "Speaker_Indonesia"
+    if old_speaker.exists():
+        for f in old_speaker.glob("*"):
+            f.unlink()
+        try:
+            old_speaker.rmdir()
+        except Exception:
+            pass
+
+    print("=" * 70)
+    print("  🎙️ DOWNLOADING & COMBINING DUAL INDONESIAN TTS DATASETS")
+    print(f"  1. Conversational Dataset: agufsamudra/tts-indo ({sample_per_dataset} samples)")
+    print(f"  2. Audiobook Dataset:      X-lord/Dataset-Text-To-Speech-Indonesia ({sample_per_dataset} samples)")
+    print("=" * 70)
+
+    # 1. Download conversational
+    print("\n▶ [1/2] Processing Conversational Indonesian (agufsamudra/tts-indo)...")
+    c_count, c_dur = download_and_process_dataset(
+        output_dir=conv_dir,
+        limit=sample_per_dataset,
+        dataset_repo="agufsamudra/tts-indo",
+        speaker_name="Speaker_Conversational"
+    )
+
+    # 2. Download audiobook
+    print("\n▶ [2/2] Processing Audiobook Indonesian (X-lord/Dataset-Text-To-Speech-Indonesia)...")
+    b_count, b_dur = download_and_process_dataset(
+        output_dir=book_dir,
+        limit=sample_per_dataset,
+        dataset_repo="X-lord/Dataset-Text-To-Speech-Indonesia",
+        speaker_name="Speaker_Audiobook"
+    )
+
+    # Combined summary
+    total_samples = c_count + b_count
+    total_hours = (c_dur + b_dur) / 3600
+    combined_manifest = data_dir / "dataset_manifest.json"
+    with open(combined_manifest, "w", encoding="utf-8") as f:
+        json.dump({
+            "datasets": ["agufsamudra/tts-indo", "X-lord/Dataset-Text-To-Speech-Indonesia"],
+            "speakers": ["Speaker_Conversational", "Speaker_Audiobook"],
+            "total_segments": total_samples,
+            "total_duration_hours": round(total_hours, 2),
+            "sample_rate": TARGET_SAMPLE_RATE,
+        }, f, indent=2)
+
+    print("\n" + "=" * 70)
+    print("  🎉 DUAL DATASET COMBINATION COMPLETE!")
+    print(f"  Total Combined Segments: {total_samples}")
+    print(f"  Total Audio Duration:    {total_hours:.2f} hours")
+    print(f"  Output Directories:      {conv_dir.name} & {book_dir.name}")
+    print("=" * 70 + "\n")
 
 
 if __name__ == "__main__":
@@ -225,12 +292,16 @@ if __name__ == "__main__":
     parser.add_argument("--all", action="store_true", help="Download and process all available dataset segments")
     parser.add_argument("--output", type=str, default=str(DEFAULT_OUTPUT_DIR), help="Output directory for .wav and .lab files")
     parser.add_argument("--speaker", type=str, default="Speaker_Indonesia", help="Speaker identifier tag")
+    parser.add_argument("--combine", action="store_true", help="Download and combine both agufsamudra and X-lord datasets")
 
     args = parser.parse_args()
-    download_and_process_dataset(
-        output_dir=Path(args.output),
-        limit=args.sample,
-        all_records=args.all,
-        dataset_repo=args.repo,
-        speaker_name=args.speaker
-    )
+    if args.combine:
+        download_combined_datasets(sample_per_dataset=args.sample)
+    else:
+        download_and_process_dataset(
+            output_dir=Path(args.output),
+            limit=args.sample,
+            all_records=args.all,
+            dataset_repo=args.repo,
+            speaker_name=args.speaker
+        )
