@@ -187,5 +187,73 @@ describe("ChatTTS API Route Handler & Schema (/api/tts)", () => {
       const data = await res.json();
       expect(data.error).toContain("tidak dapat dihubungi");
     });
+
+    it("should route to Google Gemini Speech when model is gemini-tts", async () => {
+      process.env.GEMINI_API_KEY = "test-gemini-key";
+      const dummyPcm = Buffer.alloc(4800, 0x55);
+      const mockGeminiResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: "audio/L16;codec=pcm;rate=24000",
+                    data: dummyPcm.toString("base64"),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => mockGeminiResponse,
+      });
+      vi.stubGlobal("fetch", mockFetch);
+
+      const req = new NextRequest("http://localhost:3000/api/tts", {
+        method: "POST",
+        body: JSON.stringify({
+          text: "Halo sahabat podcast! [laughing] Senang sekali bertemu. [whisper] Dengarkan ini.",
+          model: "gemini-tts",
+          voice_seed: 9001,
+        }),
+      });
+
+      const res = await POST(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("audio/wav");
+      expect(res.headers.get("X-TTS-Engine")).toBe("gemini-speech");
+      expect(res.headers.get("X-Model-Mode")).toBe("gemini-tts");
+      expect(res.headers.get("X-Voice-Name")).toBe("Kore");
+
+      const wavBuffer = await res.arrayBuffer();
+      expect(wavBuffer.byteLength).toBe(dummyPcm.length + 44);
+    });
+  });
+
+  describe("GET /api/tts?models=true", () => {
+    it("should return gemini-tts model and gemini voices in fallback catalog", async () => {
+      const mockFetch = vi.fn().mockRejectedValue(new Error("Connection refused"));
+      vi.stubGlobal("fetch", mockFetch);
+
+      const req = new NextRequest("http://localhost:3000/api/tts?models=true");
+      const res = await GET(req);
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.active_checkpoint).toBe("gemini-tts");
+      const geminiModel = data.checkpoints.find((c: any) => c.id === "gemini-tts");
+      expect(geminiModel).toBeDefined();
+      expect(geminiModel.name).toContain("Gemini Speech");
+
+      const geminiVoices = data.voices.filter((v: any) => v.group === "gemini");
+      expect(geminiVoices.length).toBe(5);
+      expect(geminiVoices.map((v: any) => v.seed)).toEqual([9001, 9002, 9003, 9004, 9005]);
+    });
   });
 });

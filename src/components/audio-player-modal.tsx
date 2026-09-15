@@ -44,7 +44,7 @@ interface VoiceOption {
   name: string;
   gender: "male" | "female";
   language?: "id" | "en-multi";
-  group?: "ardi" | "gadis" | "nusantara" | "multilingual";
+  group?: "gemini" | "ardi" | "gadis" | "nusantara" | "multilingual";
   style: string;
   description?: string;
   default_speed?: number;
@@ -52,18 +52,25 @@ interface VoiceOption {
 
 const DEFAULT_MODELS: ModelCheckpointOption[] = [
   {
+    id: "gemini-tts",
+    name: "✨ Google Gemini Speech (Native Vocal Tags & Human Emotion)",
+    description: "Multimodal audio generator langsung dari Google dengan ekspresi vokal asli ([laughs], [whispers], [sighs], [excited]).",
+    is_ready: true,
+    recommended: true,
+  },
+  {
     id: "indonesia-lora",
     name: "🇮🇩 Indonesia Fine-Tuned (X-Lord Dataset LoRA)",
     description: "Model terlatih pada 16.4 jam audio Bahasa Indonesia untuk intonasi lokal alami.",
     is_ready: true,
-    recommended: true,
+    recommended: false,
   },
   {
     id: "standby-neural",
     name: "⚡ High-Definition Neural Engine (Studio)",
     description: "Mesin vokal studio berkualitas tinggi untuk podcast dan narasi buku (ID & EN Multilingual).",
     is_ready: true,
-    recommended: true,
+    recommended: false,
   },
   {
     id: "default",
@@ -75,6 +82,58 @@ const DEFAULT_MODELS: ModelCheckpointOption[] = [
 ];
 
 const DEFAULT_VOICES: VoiceOption[] = [
+  // ✨ Google Gemini Speech Voices (Native Human Emotion & Vocal Tags)
+  {
+    seed: 9001,
+    name: "Kore (Wanita - Tenang & Edukatif)",
+    gender: "female",
+    language: "id",
+    group: "gemini",
+    style: "Kalem, Menawan & Edukasi",
+    description: "Artikulasi jernih dan santun dari Gemini, ekspresi vokal hidup dan intonasi alami.",
+    default_speed: 1.0,
+  },
+  {
+    seed: 9002,
+    name: "Aoede (Wanita - Hangat & Storytelling)",
+    gender: "female",
+    language: "id",
+    group: "gemini",
+    style: "Dramatis, Hangat & Penuh Emosi",
+    description: "Penuh emosi dan ekspresi mendalam untuk cerita fiksi, podcast, dan narasi personal.",
+    default_speed: 1.0,
+  },
+  {
+    seed: 9003,
+    name: "Puck (Pria - Ceria & Upbeat)",
+    gender: "male",
+    language: "id",
+    group: "gemini",
+    style: "Dinamis, Ramah & Upbeat",
+    description: "Host muda energik, tawa lepas, dan sangat engaging untuk obrolan santai.",
+    default_speed: 1.0,
+  },
+  {
+    seed: 9004,
+    name: "Charon (Pria - Berat & Karismatik)",
+    gender: "male",
+    language: "id",
+    group: "gemini",
+    style: "Suara Berat, Karismatik & Berwibawa",
+    description: "Resonansi nada rendah yang berwibawa untuk ulasan mendalam dan dokumenter.",
+    default_speed: 1.0,
+  },
+  {
+    seed: 9005,
+    name: "Fenrir (Pria - Tegas & Mantap)",
+    gender: "male",
+    language: "id",
+    group: "gemini",
+    style: "Percaya Diri, Kuat & Lugas",
+    description: "Karakter pria tegas dan percaya diri untuk materi kepemimpinan dan bisnis.",
+    default_speed: 1.0,
+  },
+
   // 🎙️ Varian Andi / Ardi (Pria - Host Favorit, Sangat Nyaman & Multi-Bahasa)
   {
     seed: 2222,
@@ -291,8 +350,8 @@ export function AudioPlayerModal({
   title = "Fish-Speech Studio (Multilingual & Indonesia)",
 }: AudioPlayerModalProps) {
   const [text, setText] = useState(initialText || "");
-  const [model, setModel] = useState<string>("indonesia-lora");
-  const [voiceSeed, setVoiceSeed] = useState<number>(2222);
+  const [model, setModel] = useState<string>("gemini-tts");
+  const [voiceSeed, setVoiceSeed] = useState<number>(9001);
   const [speed, setSpeed] = useState<number>(1.0);
   const [paragraphDelay, setParagraphDelay] = useState<number>(1.0);
   const [temperature, setTemperature] = useState<number>(0.3);
@@ -692,11 +751,19 @@ export function AudioPlayerModal({
             <div className="space-y-1.5">
               <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#191919] flex items-center justify-between">
                 <span>Model Checkpoint</span>
-                <span className="text-[10px] font-normal text-[#0066cc]">Fish-Speech v1.5</span>
+                <span className="text-[10px] font-normal text-[#0066cc]">
+                  {model.startsWith("gemini") ? "✨ Gemini 2.5 Native Audio" : "Fish-Speech v1.5"}
+                </span>
               </label>
               <select
                 value={model}
-                onChange={(e) => setModel(e.target.value)}
+                onChange={(e) => {
+                  const newModel = e.target.value;
+                  setModel(newModel);
+                  if (newModel === "gemini-tts" && (!voiceSeed || voiceSeed < 9001 || voiceSeed > 9005)) {
+                    setVoiceSeed(9001); // Auto-select Kore for Gemini
+                  }
+                }}
                 disabled={isLoading}
                 className="w-full h-10 px-3 rounded-xl bg-[#faf9f6] border border-[#e8e7e0] text-xs font-medium text-[#191919] outline-none focus:border-[#191919] cursor-pointer"
               >
@@ -716,9 +783,16 @@ export function AudioPlayerModal({
                 </label>
                 <button
                   type="button"
-                  onClick={() => setVoiceSeed(Math.floor(Math.random() * 9000) + 1000)}
+                  onClick={() => {
+                    if (model === "gemini-tts") {
+                      const geminiSeeds = [9001, 9002, 9003, 9004, 9005];
+                      setVoiceSeed(geminiSeeds[Math.floor(Math.random() * geminiSeeds.length)]);
+                    } else {
+                      setVoiceSeed(Math.floor(Math.random() * 9000) + 1000);
+                    }
+                  }}
                   className="text-[10px] text-[#777777] hover:text-[#191919] flex items-center gap-1 cursor-pointer transition-colors"
-                  title="Acak Seed Suara"
+                  title="Acak Karakter Suara"
                 >
                   <Dices className="w-3.5 h-3.5" />
                   <span>Acak ({voiceSeed})</span>
@@ -739,6 +813,13 @@ export function AudioPlayerModal({
                 disabled={isLoading}
                 className="w-full h-10 px-3 rounded-xl bg-[#faf9f6] border border-[#e8e7e0] text-xs font-medium text-[#191919] outline-none focus:border-[#191919] cursor-pointer"
               >
+                <optgroup label="✨ Google Gemini Voices (Native Vocal Tags & Human Emotion)">
+                  {DEFAULT_VOICES.filter((v) => v.group === "gemini").map((v) => (
+                    <option key={v.seed} value={v.seed}>
+                      {v.gender === "female" ? "👩" : "👨"} {v.name} — {v.style}
+                    </option>
+                  ))}
+                </optgroup>
                 <optgroup label="🎙️ Varian Andi / Ardi (Pria - Host Favorit & Multi-Bahasa)">
                   {DEFAULT_VOICES.filter((v) => v.group === "ardi").map((v) => (
                     <option key={v.seed} value={v.seed}>

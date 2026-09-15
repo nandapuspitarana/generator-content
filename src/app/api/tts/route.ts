@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TtsSynthesizeSchema } from "@/lib/validation/schemas";
+import { synthesizeWithGemini, GEMINI_PREBUILT_VOICES } from "@/lib/services/gemini-speech";
 
 const DEFAULT_TTS_URL = "http://localhost:8765";
+
+// In-memory job registry for asynchronous Gemini speech tasks (persisted on globalThis for dev HMR)
+const geminiJobs: Map<
+  string,
+  {
+    status: "queued" | "processing" | "completed" | "failed";
+    audioBuffer?: Buffer;
+    error?: string;
+    progress?: number;
+    created_at: number;
+    voiceName?: string;
+    durationSec?: number;
+  }
+> =
+  (globalThis as any).__geminiJobs ||
+  ((globalThis as any).__geminiJobs = new Map());
 
 function getServiceUrl() {
   return process.env.FISH_SPEECH_SERVICE_URL || process.env.CHATTTS_SERVICE_URL || DEFAULT_TTS_URL;
 }
 
 function isServiceEnabled() {
+  if (process.env.GEMINI_API_KEY) return true;
   const fishFlag = process.env.FISH_SPEECH_ENABLED;
   if (fishFlag !== undefined) return fishFlag !== "false";
   const chatFlag = process.env.CHATTTS_ENABLED;
@@ -50,29 +68,147 @@ export async function GET(request?: NextRequest): Promise<NextResponse> {
     }
   }
 
+  // Handle Gemini in-memory async job polling & retrieval
+  if (jobId && jobId.startsWith("gemini-")) {
+    const job = geminiJobs.get(jobId);
+    if (!job) {
+      return NextResponse.json(
+        { error: `Gemini job ${jobId} tidak ditemukan.` },
+        { status: 404 }
+      );
+    }
+
+    if (wantsAudio) {
+      if (job.status !== "completed" || !job.audioBuffer) {
+        if (job.status === "failed") {
+          return NextResponse.json(
+            { error: `Job failed: ${job.error}` },
+            { status: 500 }
+          );
+        }
+        return NextResponse.json(
+          { error: "Audio masih diproses oleh Gemini." },
+          { status: 202 }
+        );
+      }
+
+      return new NextResponse(job.audioBuffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/wav",
+          "Content-Disposition": `inline; filename="gemini-${jobId.slice(0, 8)}.wav"`,
+          "Content-Length": String(job.audioBuffer.byteLength),
+          "X-TTS-Engine": "gemini-speech",
+          "X-Model-Mode": "gemini-tts",
+          "X-Voice-Name": job.voiceName || "Kore",
+          "X-Audio-Duration": String(job.durationSec || 0),
+        },
+      });
+    }
+
+    return NextResponse.json({
+      job_id: jobId,
+      status: job.status,
+      progress: job.progress ?? (job.status === "completed" ? 1.0 : 0.5),
+      error: job.error,
+      has_audio: Boolean(job.audioBuffer),
+    });
+  }
+
   // Handle Models & Voices Query
   if (wantsModels) {
+    const geminiCheckpoint = {
+      id: "gemini-tts",
+      name: "✨ Google Gemini Speech Studio (Vocal Tags Native)",
+      description: "Model multimodal Google dengan ekspresi vokal nyata (tertawa, bisikan, desahan, terkejut), 0MB GPU VRAM, dan multi-bahasa sempurna.",
+      is_ready: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY),
+      recommended: true,
+    };
+
+    const geminiVoices = [
+      {
+        seed: 9001,
+        name: "Kore (Wanita - Tenang & Edukatif)",
+        gender: "female",
+        language: "id-multi",
+        group: "gemini",
+        style: "✨ Kalem, Menawan & Edukasi",
+        description: "Artikulasi jernih dan santun dari Gemini, ekspresi vokal hidup dan natural.",
+        default_speed: 1.0,
+        voice_id: "gemini-Kore",
+      },
+      {
+        seed: 9002,
+        name: "Aoede (Wanita - Hangat & Storytelling)",
+        gender: "female",
+        language: "id-multi",
+        group: "gemini",
+        style: "✨ Dramatis, Hangat & Penuh Emosi",
+        description: "Penuh emosi dan ekspresi mendalam untuk cerita fiksi, podcast, dan narasi personal.",
+        default_speed: 1.0,
+        voice_id: "gemini-Aoede",
+      },
+      {
+        seed: 9003,
+        name: "Puck (Pria - Ceria & Upbeat)",
+        gender: "male",
+        language: "id-multi",
+        group: "gemini",
+        style: "✨ Dinamis, Ramah & Upbeat",
+        description: "Host muda energik, tawa lepas, dan sangat engaging untuk obrolan santai.",
+        default_speed: 1.0,
+        voice_id: "gemini-Puck",
+      },
+      {
+        seed: 9004,
+        name: "Charon (Pria - Berat & Karismatik)",
+        gender: "male",
+        language: "id-multi",
+        group: "gemini",
+        style: "✨ Suara Berat, Karismatik & Berwibawa",
+        description: "Resonansi nada rendah yang berwibawa untuk ulasan mendalam dan dokumenter.",
+        default_speed: 1.0,
+        voice_id: "gemini-Charon",
+      },
+      {
+        seed: 9005,
+        name: "Fenrir (Pria - Tegas & Mantap)",
+        gender: "male",
+        language: "id-multi",
+        group: "gemini",
+        style: "✨ Percaya Diri, Kuat & Lugas",
+        description: "Karakter pria tegas dan percaya diri untuk materi kepemimpinan dan bisnis.",
+        default_speed: 1.0,
+        voice_id: "gemini-Fenrir",
+      },
+    ];
+
     try {
       const res = await fetch(`${serviceUrl}/models`, {
         headers: { Accept: "application/json" },
       });
       if (res.ok) {
         const data = await res.json();
-        return NextResponse.json(data);
+        return NextResponse.json({
+          ...data,
+          checkpoints: [geminiCheckpoint, ...(data.checkpoints || [])],
+          voices: [...geminiVoices, ...(data.voices || [])],
+        });
       }
     } catch (err: any) {
       console.warn("Could not fetch models from TTS service:", err);
     }
     // Return standard fallback models if microservice has not yet refreshed /models route
     return NextResponse.json({
-      active_checkpoint: "standby-neural",
+      active_checkpoint: "gemini-tts",
       checkpoints: [
+        geminiCheckpoint,
         {
           id: "indonesia-lora",
           name: "Indonesia Fine-Tuned (X-Lord Dataset LoRA)",
           description: "Trained on 16.4 hours of Indonesian speech dataset for natural local intonation.",
           is_ready: false,
-          recommended: true,
+          recommended: false,
         },
         {
           id: "standby-neural",
@@ -90,6 +226,7 @@ export async function GET(request?: NextRequest): Promise<NextResponse> {
         },
       ],
       voices: [
+        ...geminiVoices,
         // 🎙️ Varian Andi / Ardi (Pria - Host Favorit & Multi-Bahasa)
         {
           seed: 2222,
@@ -474,6 +611,99 @@ export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawBody = body as Record<string, unknown>;
   const isAsyncMode = searchParams.get("mode") === "async" || rawBody.mode === "async";
+
+  // Check if Google Gemini Speech Studio should process this request
+  const isGemini =
+    model === "gemini-tts" ||
+    model?.startsWith("gemini") ||
+    (voice_seed && voice_seed >= 9001 && voice_seed <= 9005) ||
+    (Boolean(process.env.GEMINI_API_KEY) && (model === "gemini" || !isServiceEnabled()));
+
+  if (isGemini) {
+    const geminiModel =
+      model && model !== "gemini-tts" && !model.startsWith("gemini-tts")
+        ? model
+        : process.env.GEMINI_TTS_MODEL || "gemini-2.5-flash-preview-tts";
+
+    // Clean up old gemini jobs (> 1 hour)
+    const oneHourAgo = Date.now() - 3600 * 1000;
+    for (const [id, j] of geminiJobs.entries()) {
+      if (j.created_at < oneHourAgo) geminiJobs.delete(id);
+    }
+
+    if (isAsyncMode) {
+      const jobId = "gemini-" + Math.random().toString(36).substring(2, 10);
+      geminiJobs.set(jobId, {
+        status: "processing",
+        progress: 0.3,
+        created_at: Date.now(),
+      });
+
+      // Background asynchronous execution
+      synthesizeWithGemini({
+        text: sanitizedText,
+        voiceSeed: voice_seed,
+        model: geminiModel,
+      })
+        .then((res) => {
+          geminiJobs.set(jobId, {
+            status: "completed",
+            audioBuffer: res.audioBuffer,
+            progress: 1.0,
+            voiceName: res.voiceName,
+            durationSec: res.durationSec,
+            created_at: Date.now(),
+          });
+        })
+        .catch((err) => {
+          geminiJobs.set(jobId, {
+            status: "failed",
+            error: err.message || String(err),
+            created_at: Date.now(),
+          });
+        });
+
+      return NextResponse.json({
+        success: true,
+        mode: "async",
+        job_id: jobId,
+        status: "queued",
+        statusUrl: `/api/tts?jobId=${jobId}`,
+        audioUrl: `/api/tts?jobId=${jobId}&audio=true`,
+        total_segments: 1,
+        engine: "gemini-speech",
+      });
+    }
+
+    // Synchronous mode
+    try {
+      const geminiRes = await synthesizeWithGemini({
+        text: sanitizedText,
+        voiceSeed: voice_seed,
+        model: geminiModel,
+      });
+
+      return new NextResponse(geminiRes.audioBuffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "audio/wav",
+          "Content-Disposition": 'inline; filename="gemini-speech.wav"',
+          "Content-Length": String(geminiRes.audioBuffer.byteLength),
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "X-TTS-Engine": "gemini-speech",
+          "X-Model-Mode": "gemini-tts",
+          "X-Voice-Name": geminiRes.voiceName,
+          "X-Audio-Duration": String(geminiRes.durationSec),
+        },
+      });
+    } catch (err: any) {
+      console.error("Gemini Speech API Error:", err);
+      return NextResponse.json(
+        { error: `Gemini Speech API error: ${err.message || String(err)}` },
+        { status: 500 }
+      );
+    }
+  }
 
   // 1. Asynchronous Job Mode (Guaranteed zero-timeout for massive podcast scripts)
   if (isAsyncMode) {
