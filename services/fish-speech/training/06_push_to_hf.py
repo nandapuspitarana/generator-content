@@ -62,6 +62,28 @@ Model dilatih menggunakan akselerasi GPU lokal NVIDIA RTX 5060 Ti dengan native 
   - **Top-5 Accuracy**: `49.0%`
   - **Arsitektur**: Multi-group Dual-AR Transformer
 
+## ⚡ Benchmark Performa & Spesifikasi Hardware Minimal
+
+### 📊 Hasil Pengujian Benchmark Real-World (NVIDIA GTX 1650 4GB / CUDA)
+
+| Skala Naskah | Jumlah Karakter | Waktu Sintesis (Latency) | Durasi Audio (.wav) | Real-Time Factor (RTF) | Output Speedup |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Kalimat Singkat** | 61 karakter | `2.75 detik` | `4.22 detik` | **`0.653x`** | **`1.53x`** (Lebih Cepat Dari Realtime) |
+| **Paragraf Narasi** | 223 karakter | `3.63 detik` | `12.89 detik` | **`0.282x`** | **`3.55x`** (Lebih Cepat Dari Realtime) |
+| **Naskah Podcast** | 418 karakter | `3.36 detik` | `27.08 detik` | **`0.124x`** | **`8.05x`** (Lebih Cepat Dari Realtime) |
+
+* Rata-rata RTF adalah **`0.35x`** (~3x lebih cepat dibanding waktu pemutaran audio nyata).
+
+### 🖥️ Spesifikasi Minimal Hardware
+
+| Komponen Hardware | 🔴 Standby / Neural CPU Mode | 🟢 Local PyTorch GPU Inference (Recommended) |
+| :--- | :--- | :--- |
+| **Sistem Operasi** | Windows 10/11, Linux, macOS | Windows 10/11 64-bit, Linux (Ubuntu 20.04+) |
+| **Processor (CPU)** | Dual-Core x86_64 / ARM64 (2.0 GHz+) | Quad-Core x86_64 dengan instruksi AVX2 |
+| **System RAM** | **4 GB RAM** | **8 GB RAM** |
+| **VRAM GPU** | **0 MB (Tidak butuh GPU)** | **NVIDIA GPU Min. 4 GB VRAM** (GTX 1650, RTX 3050+) |
+| **Penyimpanan (Disk)**| **500 MB** | **3.0 GB** (1.4 GB Bobot Model + 1 GB Cache) |
+
 ---
 
 ## 🚀 Cara Penggunaan (Inference)

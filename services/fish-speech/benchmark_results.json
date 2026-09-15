@@ -1,0 +1,56 @@
+{
+  "system_info": {
+    "platform": "win32",
+    "python_version": "3.12.5",
+    "cpu_count_logical": 28,
+    "cpu_count_physical": 28,
+    "ram_total_gb": "N/A",
+    "gpu_available": true,
+    "gpu_name": "NVIDIA GeForce GTX 1650",
+    "vram_total_mb": 4095.7
+  },
+  "model_loaded": true,
+  "active_checkpoint": "fish-speech-1.5 (Local Offline Weights Active)",
+  "init_time_sec": 0.001,
+  "runs": [
+    {
+      "test_id": "short",
+      "title": "Kalimat Singkat (Short)",
+      "char_count": 61,
+      "speech_segments": 1,
+      "generation_time_sec": 2.754,
+      "audio_duration_sec": 4.22,
+      "real_time_factor": 0.653,
+      "throughput_char_per_sec": 22.15,
+      "throughput_audio_speedup": 1.53,
+      "ram_mb": 0.0,
+      "vram_mb": 0.0
+    },
+    {
+      "test_id": "medium",
+      "title": "Paragraf Narasi (Medium)",
+      "char_count": 223,
+      "speech_segments": 1,
+      "generation_time_sec": 3.634,
+      "audio_duration_sec": 12.89,
+      "real_time_factor": 0.282,
+      "throughput_char_per_sec": 61.36,
+      "throughput_audio_speedup": 3.55,
+      "ram_mb": 0.0,
+      "vram_mb": 0.0
+    },
+    {
+      "test_id": "long",
+      "title": "Naskah Podcast / Audiobook (Long)",
+      "char_count": 418,
+      "speech_segments": 3,
+      "generation_time_sec": 3.363,
+      "audio_duration_sec": 27.08,
+      "real_time_factor": 0.124,
+      "throughput_char_per_sec": 124.29,
+      "throughput_audio_speedup": 8.05,
+      "ram_mb": 0.0,
+      "vram_mb": 0.0
+    }
+  ]
+}

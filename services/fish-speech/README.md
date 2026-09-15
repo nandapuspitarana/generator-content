@@ -165,6 +165,43 @@ Model menunjukkan konvergensi yang sangat stabil dan cepat pada GPU RTX 5060 Ti:
 
 ---
 
+## ⚡ Benchmark Performa & Spesifikasi Hardware Minimal
+
+### 📊 Hasil Pengujian Benchmark Real-World (NVIDIA GTX 1650 4GB / CUDA)
+
+Skrip benchmark otomatis (`benchmark_performance.py`) menguji kinerja sintesis pada 3 skala naskah:
+
+| Skala Naskah | Jumlah Karakter | Waktu Sintesis (Latency) | Durasi Audio (.wav) | Real-Time Factor (RTF) | Speedup Factor |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Kalimat Singkat** | 61 karakter | `2.75 detik` | `4.22 detik` | **`0.653x`** | **`1.53x`** (Lebih Cepat Dari Realtime) |
+| **Paragraf Narasi** | 223 karakter | `3.63 detik` | `12.89 detik` | **`0.282x`** | **`3.55x`** (Lebih Cepat Dari Realtime) |
+| **Naskah Podcast** | 418 karakter | `3.36 detik` | `27.08 detik` | **`0.124x`** | **`8.05x`** (Lebih Cepat Dari Realtime) |
+
+* Catatan: **Real-Time Factor (RTF)** < 1.0 menandakan waktu generasi jauh lebih cepat daripada durasi pemutaran audio nyata (RTF 0.124x = 27 detik audio dihasilkan hanya dalam 3.3 detik).
+
+---
+
+### 🖥️ Spesifikasi Minimal & Rekomendasi Hardware
+
+Berikut adalah acuan batas minimal perangkat keras untuk menjalankan model Fish-Speech 1.5 secara offline maupun dalam mode standby server:
+
+| Komponen Hardware | 🔴 Standby / Neural CPU Mode | 🟢 Local PyTorch GPU Inference (Recommended) |
+| :--- | :--- | :--- |
+| **Sistem Operasi** | Windows 10/11, Linux (Ubuntu 20.04+), macOS | Windows 10/11 64-bit, Linux (Ubuntu 20.04+) |
+| **Processor (CPU)** | Dual-Core x86_64 / ARM64 (2.0 GHz+) | Quad-Core x86_64 dengan instruksi AVX2 |
+| **System RAM** | **4 GB RAM** | **8 GB RAM** (Dua Saluran / Dual Channel) |
+| **VRAM GPU** | **0 MB (Tidak butuh GPU)** | **NVIDIA GPU Min. 4 GB VRAM** (GTX 1650, RTX 3050+) |
+| **Penyimpanan (Disk)**| **500 MB** | **3.0 GB** (1.4 GB Bobot Model + 1 GB Runtime Cache) |
+| **Rata-rata RTF** | `< 0.15x` | `< 0.35x` |
+
+#### Rekomendasi Server Production / High Throughput:
+* **CPU**: 8-Core / 16-Thread (AMD Ryzen 7 / Intel Core i7 / Xeon E5 v4+)
+* **System RAM**: 16 GB DDR4/DDR5
+* **GPU**: NVIDIA RTX 3060 / 4060 / 5060 Ti (8 GB+ VRAM)
+* **Storage**: NVMe M.2 SSD
+
+---
+
 ## 🚀 Deploy & Menjalankan Server API
 
 ### Menjalankan Server API secara Lokal

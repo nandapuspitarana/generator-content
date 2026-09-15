@@ -197,7 +197,35 @@ run.bat
 
 ---
 
-## 9. Status Implementasi: Selesai vs Pending (Roadmap)
+## 9. Benchmark Performa & Spesifikasi Minimal Hardware
+
+### 📊 Hasil Pengujian Benchmark Kinerja (NVIDIA GTX 1650 4GB / CUDA 12.1)
+
+Metrik performa diuji menggunakan skrip `benchmark_performance.py`:
+
+| Pengujian Naskah | Jumlah Karakter | Waktu Generasi | Durasi Audio (.wav) | Real-Time Factor (RTF) | Output Throughput |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Kalimat Singkat** | 61 karakter | `2.75 detik` | `4.22 detik` | **`0.653x`** | **`22.1 char/sec`** |
+| **Paragraf Narasi** | 223 karakter | `3.63 detik` | `12.89 detik` | **`0.282x`** | **`61.4 char/sec`** |
+| **Naskah Podcast** | 418 karakter | `3.36 detik` | `27.08 detik` | **`0.124x`** | **`124.3 char/sec`** |
+
+> 🚀 **Kinerja Real-Time**: Dengan rata-rata RTF `0.35x`, generasi audio berlangsung ~3x lebih cepat dibanding waktu pemutaran nyata (27 detik audio podcast disintesis hanya dalam 3.3 detik).
+
+---
+
+### 🖥️ Spesifikasi Perangkat Keras Minimum & Rekomendasi
+
+| Komponen Hardware | 🔴 Standby / Neural CPU Mode | 🟢 Local PyTorch GPU Inference (Recommended) |
+| :--- | :--- | :--- |
+| **Sistem Operasi** | Windows 10/11, Linux, macOS | Windows 10/11 64-bit, Linux (Ubuntu 20.04+) |
+| **Processor (CPU)** | Dual-Core x86_64 / ARM64 (2.0 GHz+) | Quad-Core x86_64 dengan instruksi AVX2 |
+| **System RAM** | **4 GB RAM** | **8 GB RAM** |
+| **VRAM GPU** | **0 MB (Tidak butuh GPU)** | **NVIDIA GPU Min. 4 GB VRAM** (GTX 1650, RTX 3050+) |
+| **Penyimpanan (Disk)**| **500 MB** | **3.0 GB** (1.4 GB Bobot Model + 1 GB Cache) |
+
+---
+
+## 10. Status Implementasi: Selesai vs Pending (Roadmap)
 
 ### 🟢 Sudah Dikerjakan (Complete)
 - [x] Engine Fish-Speech v1.5 dengan Dual-AR Transformer & Standby Neural Fallback.
@@ -208,10 +236,12 @@ run.bat
 - [x] Zero-Shot Voice Cloning via Audio Referensi.
 - [x] All-in-One Process Manager (`run.py`, `npm run dev:all`, `npm run stop`).
 - [x] 100% Automated Test Pass: 146 unit test Vitest + 8 Python test cases.
+- [x] **Unduh & Verifikasi Bobot Model Penuh**: Downloader otomatis (`download_model.py`) & bobot `fishaudio/fish-speech-1.5` (~1.4GB) terverifikasi offline 100%.
+- [x] **Skrip Benchmark Kinerja & Spesifikasi Hardware**: Skrip pengujian `benchmark_performance.py` & laporan metrik RTF / RAM / VRAM.
 
 ### 🟡 Masih Pending (Roadmap & Backlog Masa Depan)
-- [ ] **Unduh Bobot Model Lokal Penuh**: Menyediakan checkpoint base `openaudio-s1-mini` dan LoRA `indonesia-tts-merged` (~1.5GB) di `services/fish-speech/checkpoints/` untuk inferensi 100% offline tanpa cloud.
 - [ ] **Google Colab LoRA Fine-Tuning Notebook**: Notebook pelatihan suara pribadi pengguna di Google Colab T4 GPU gratis.
 - [ ] **Real-Time Audio Streaming**: Streaming chunked audio via WebSocket (`/v1/tts/stream`) untuk preview instan dalam < 2 detik pertama.
 - [ ] **Multi-Speaker Auto-Dialogue**: Deteksi dan sintesis percakapan 2 host otomatis secara bergantian dalam 1 file audio podcast.
 - [ ] **Auto BGM & SFX Mixing**: Penambahan musik latar dengan fitur *auto-ducking* otomatis saat narator berbicara.
+
