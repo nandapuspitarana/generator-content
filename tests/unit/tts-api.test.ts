@@ -228,7 +228,7 @@ describe("ChatTTS API Route Handler & Schema (/api/tts)", () => {
       expect(res.status).toBe(200);
       expect(res.headers.get("Content-Type")).toBe("audio/wav");
       expect(res.headers.get("X-TTS-Engine")).toBe("gemini-speech");
-      expect(res.headers.get("X-Model-Mode")).toBe("gemini-tts");
+      expect(res.headers.get("X-Model-Mode")).toContain("gemini");
       expect(res.headers.get("X-Voice-Name")).toBe("Kore");
 
       const wavBuffer = await res.arrayBuffer();

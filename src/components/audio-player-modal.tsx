@@ -53,10 +53,17 @@ interface VoiceOption {
 const DEFAULT_MODELS: ModelCheckpointOption[] = [
   {
     id: "gemini-tts",
-    name: "✨ Google Gemini Speech (Native Vocal Tags & Human Emotion)",
-    description: "Multimodal audio generator langsung dari Google dengan ekspresi vokal asli ([laughs], [whispers], [sighs], [excited]).",
+    name: "✨ Google Gemini Speech (Auto-Failover Resilient)",
+    description: "Multimodal audio generator langsung dari Google dengan auto-failover cerdas dan ekspresi vokal asli ([laughs], [whispers], [sighs], [excited]).",
     is_ready: true,
     recommended: true,
+  },
+  {
+    id: "gemini-3.1-flash-tts-preview",
+    name: "⚡ Google Gemini 3.1 Flash Speech (High Capacity)",
+    description: "Model generasi terbaru Google dengan kuota stabil, latensi super cepat, dan anti-antrean.",
+    is_ready: true,
+    recommended: false,
   },
   {
     id: "indonesia-lora",
@@ -752,7 +759,7 @@ export function AudioPlayerModal({
               <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#191919] flex items-center justify-between">
                 <span>Model Checkpoint</span>
                 <span className="text-[10px] font-normal text-[#0066cc]">
-                  {model.startsWith("gemini") ? "✨ Gemini 2.5 Native Audio" : "Fish-Speech v1.5"}
+                  {model.startsWith("gemini") ? "✨ Gemini Multimodal Audio" : "Fish-Speech v1.5"}
                 </span>
               </label>
               <select
@@ -760,7 +767,7 @@ export function AudioPlayerModal({
                 onChange={(e) => {
                   const newModel = e.target.value;
                   setModel(newModel);
-                  if (newModel === "gemini-tts" && (!voiceSeed || voiceSeed < 9001 || voiceSeed > 9005)) {
+                  if (newModel.startsWith("gemini") && (!voiceSeed || voiceSeed < 9001 || voiceSeed > 9005)) {
                     setVoiceSeed(9001); // Auto-select Kore for Gemini
                   }
                 }}
@@ -784,7 +791,7 @@ export function AudioPlayerModal({
                 <button
                   type="button"
                   onClick={() => {
-                    if (model === "gemini-tts") {
+                    if (model.startsWith("gemini")) {
                       const geminiSeeds = [9001, 9002, 9003, 9004, 9005];
                       setVoiceSeed(geminiSeeds[Math.floor(Math.random() * geminiSeeds.length)]);
                     } else {

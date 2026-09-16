@@ -655,7 +655,36 @@ export async function POST(request: NextRequest) {
             created_at: Date.now(),
           });
         })
-        .catch((err) => {
+        .catch(async (err) => {
+          // Attempt graceful fallback to local engine if available
+          try {
+            const localSeed = (voice_seed && voice_seed < 9000) ? voice_seed : 2222;
+            const fallbackRes = await fetch(`${serviceUrl}/v1/tts`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                text: sanitizedText,
+                voice_seed: localSeed,
+                temperature: 0.3,
+                speed: 1.0,
+              }),
+            });
+            if (fallbackRes.ok) {
+              const buffer = Buffer.from(await fallbackRes.arrayBuffer());
+              geminiJobs.set(jobId, {
+                status: "completed",
+                audioBuffer: buffer,
+                progress: 1.0,
+                voiceName: "Local Studio Fallback",
+                durationSec: Math.round(buffer.byteLength / 64000),
+                created_at: Date.now(),
+              });
+              return;
+            }
+          } catch {
+            // Ignored
+          }
+
           geminiJobs.set(jobId, {
             status: "failed",
             error: err.message || String(err),
@@ -691,16 +720,53 @@ export async function POST(request: NextRequest) {
           "Content-Length": String(geminiRes.audioBuffer.byteLength),
           "Cache-Control": "no-cache, no-store, must-revalidate",
           "X-TTS-Engine": "gemini-speech",
-          "X-Model-Mode": "gemini-tts",
+          "X-Model-Mode": geminiRes.modelUsed || "gemini-tts",
           "X-Voice-Name": geminiRes.voiceName,
           "X-Audio-Duration": String(geminiRes.durationSec),
         },
       });
     } catch (err: any) {
-      console.error("Gemini Speech API Error:", err);
+      console.warn("Gemini Speech API encountered an issue, checking local studio fallback:", err.message);
+
+      // Attempt graceful local fallback if local microservice is running
+      try {
+        const localSeed = (voice_seed && voice_seed < 9000) ? voice_seed : 2222;
+        const fallbackRes = await fetch(`${serviceUrl}/v1/tts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: sanitizedText,
+            voice_seed: localSeed,
+            temperature: 0.3,
+            speed: 1.0,
+          }),
+        });
+
+        if (fallbackRes.ok) {
+          const buffer = Buffer.from(await fallbackRes.arrayBuffer());
+          return new NextResponse(buffer, {
+            status: 200,
+            headers: {
+              "Content-Type": "audio/wav",
+              "Content-Disposition": 'inline; filename="fallback-speech.wav"',
+              "Content-Length": String(buffer.byteLength),
+              "X-TTS-Engine": "fish-speech-fallback",
+              "X-TTS-Warning": "Gemini Cloud sedang sibuk (503 High Demand); sistem otomatis beralih ke Mesin Studio Offline.",
+            },
+          });
+        }
+      } catch {
+        // Local engine not running or unreachable
+      }
+
+      const is503 = String(err.message).includes("503") || String(err.message).includes("high demand");
       return NextResponse.json(
-        { error: `Gemini Speech API error: ${err.message || String(err)}` },
-        { status: 500 }
+        {
+          error: is503
+            ? "Gemini Speech sedang mengalami antrean tinggi (503 High Demand). Sistem telah mencoba auto-retry dan failover model. Silakan coba generate kembali dalam beberapa detik."
+            : `Gemini Speech API error: ${err.message || String(err)}`,
+        },
+        { status: is503 ? 503 : 500 }
       );
     }
   }

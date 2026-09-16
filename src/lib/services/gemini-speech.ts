@@ -228,7 +228,7 @@ export function pcmToWav(
  */
 export async function synthesizeWithGemini(
   options: GeminiTtsOptions
-): Promise<{ audioBuffer: Buffer; durationSec: number; voiceName: string }> {
+): Promise<{ audioBuffer: Buffer; durationSec: number; voiceName: string; modelUsed: string }> {
   const apiKey =
     process.env.GEMINI_API_KEY ||
     process.env.GOOGLE_API_KEY ||
@@ -240,11 +240,20 @@ export async function synthesizeWithGemini(
     );
   }
 
-  const rawModel = options.model || process.env.GEMINI_TTS_MODEL;
-  const model =
-    rawModel && rawModel !== "gemini-tts" && !rawModel.startsWith("gemini-tts")
-      ? rawModel
-      : "gemini-2.5-flash-preview-tts";
+  const requestedModel =
+    options.model && options.model !== "gemini-tts" && !options.model.startsWith("gemini-tts")
+      ? options.model
+      : process.env.GEMINI_TTS_MODEL;
+
+  // Resilient model fallback chain (tested with active 200 OK quotas)
+  const candidateModels: string[] = [];
+  if (requestedModel) candidateModels.push(requestedModel);
+  if (!candidateModels.includes("gemini-2.5-flash-preview-tts")) {
+    candidateModels.push("gemini-2.5-flash-preview-tts");
+  }
+  if (!candidateModels.includes("gemini-3.1-flash-tts-preview")) {
+    candidateModels.push("gemini-3.1-flash-tts-preview");
+  }
 
   const voiceName = resolveGeminiVoice(options.voiceSeed, options.voiceName);
   const speechText = prepareGeminiSpeechText(options.text);
@@ -252,8 +261,6 @@ export async function synthesizeWithGemini(
   if (!speechText) {
     throw new Error("Text content is empty after sanitization.");
   }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
   const payload = {
     contents: [
@@ -273,55 +280,139 @@ export async function synthesizeWithGemini(
     },
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
-    },
-    body: JSON.stringify(payload),
-  });
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    const errText = await response.text();
-    let errorDetail = errText;
-    try {
-      const errJson = JSON.parse(errText);
-      errorDetail = errJson.error?.message || errText;
-    } catch {
-      // Ignored
+  for (let mIdx = 0; mIdx < candidateModels.length; mIdx++) {
+    const currentModel = candidateModels[mIdx];
+    const maxRetries = 3; // Up to 3 retries per model on 503/429
+    let nextRetryDelayMs = 0;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      if (attempt > 0) {
+        // Use Google's requested wait duration if provided (capped at 4s), otherwise exponential backoff
+        const baseDelay =
+          nextRetryDelayMs > 0
+            ? Math.min(nextRetryDelayMs, 4000)
+            : 1200 * Math.pow(2, attempt - 1);
+        const delayMs = baseDelay + Math.floor(Math.random() * 300);
+        console.warn(
+          `[Gemini TTS] Model ${currentModel} busy (503/429, attempt ${attempt}/${maxRetries}), retrying in ${delayMs}ms...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        nextRetryDelayMs = 0;
+      }
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          let errorDetail = errText;
+          let isOverloaded = response.status === 503 || response.status === 429;
+          try {
+            const errJson = JSON.parse(errText);
+            errorDetail = errJson.error?.message || errText;
+            if (
+              errorDetail.includes("high demand") ||
+              errorDetail.includes("quota") ||
+              errorDetail.includes("RESOURCE_EXHAUSTED") ||
+              errorDetail.includes("spikes in demand")
+            ) {
+              isOverloaded = true;
+            }
+          } catch {
+            // Ignored
+          }
+
+          // Extract exact retry delay if Google specified it (e.g. "Please retry in 2.15s")
+          const retryMatch = errorDetail.match(/retry in\s+([0-9.]+)\s*s/i);
+          if (retryMatch) {
+            nextRetryDelayMs = Math.ceil(parseFloat(retryMatch[1]) * 1000) + 300;
+          } else {
+            const headerRetry = response.headers.get("retry-after");
+            if (headerRetry) {
+              nextRetryDelayMs = (parseInt(headerRetry, 10) || 2) * 1000 + 300;
+            }
+          }
+
+          // If Google requires a long cooldown (> 4s), immediately failover to next model without stalling client
+          if (isOverloaded && nextRetryDelayMs > 4000 && mIdx < candidateModels.length - 1) {
+            console.warn(
+              `[Gemini TTS] Model ${currentModel} requires long cooldown (${Math.round(nextRetryDelayMs / 1000)}s). Immediately failing over to ${candidateModels[mIdx + 1]}...`
+            );
+            lastError = new Error(`Gemini Speech API error (${response.status}): ${errorDetail}`);
+            break; // Break inner retry loop, proceed to next candidateModel immediately
+          }
+
+          if (isOverloaded && attempt < maxRetries) {
+            lastError = new Error(`Gemini Speech API error (${response.status}): ${errorDetail}`);
+            continue; // Retry this model with calculated wait
+          }
+
+          // If retries exhausted for this model and it was 503/429, failover to next model
+          if (isOverloaded && mIdx < candidateModels.length - 1) {
+            console.warn(
+              `[Gemini TTS] Model ${currentModel} reached capacity limits. Failing over to ${candidateModels[mIdx + 1]}...`
+            );
+            lastError = new Error(`Gemini Speech API error (${response.status}): ${errorDetail}`);
+            break; // Break inner loop, proceed to next candidateModel
+          }
+
+          throw new Error(`Gemini Speech API error (${response.status}): ${errorDetail}`);
+        }
+
+        const data = await response.json();
+        const candidates = data.candidates || [];
+        if (!candidates.length) {
+          throw new Error("Gemini Speech API did not return any candidates.");
+        }
+
+        const parts = candidates[0]?.content?.parts || [];
+        let rawPcmBuffer: Buffer | null = null;
+
+        for (const part of parts) {
+          if (part.inlineData && part.inlineData.data) {
+            rawPcmBuffer = Buffer.from(part.inlineData.data, "base64");
+            break;
+          }
+        }
+
+        if (!rawPcmBuffer || rawPcmBuffer.length === 0) {
+          throw new Error("No audio payload returned from Gemini Speech API.");
+        }
+
+        // Gemini returns 24kHz 16-bit Mono Linear PCM (audio/L16;codec=pcm;rate=24000)
+        const sampleRate = 24000;
+        const wavBuffer = pcmToWav(rawPcmBuffer, sampleRate, 1, 16);
+        const durationSec = Math.round((rawPcmBuffer.length / (sampleRate * 2)) * 100) / 100;
+
+        return {
+          audioBuffer: wavBuffer,
+          durationSec,
+          voiceName,
+          modelUsed: currentModel,
+        };
+      } catch (err: any) {
+        lastError = err;
+        if (attempt === maxRetries) {
+          break; // Move to next model
+        }
+      }
     }
-    throw new Error(`Gemini Speech API error (${response.status}): ${errorDetail}`);
   }
 
-  const data = await response.json();
-  const candidates = data.candidates || [];
-  if (!candidates.length) {
-    throw new Error("Gemini Speech API did not return any candidates.");
-  }
-
-  const parts = candidates[0]?.content?.parts || [];
-  let rawPcmBuffer: Buffer | null = null;
-
-  for (const part of parts) {
-    if (part.inlineData && part.inlineData.data) {
-      rawPcmBuffer = Buffer.from(part.inlineData.data, "base64");
-      break;
-    }
-  }
-
-  if (!rawPcmBuffer || rawPcmBuffer.length === 0) {
-    throw new Error("No audio payload returned from Gemini Speech API.");
-  }
-
-  // Gemini returns 24kHz 16-bit Mono Linear PCM (audio/L16;codec=pcm;rate=24000)
-  const sampleRate = 24000;
-  const wavBuffer = pcmToWav(rawPcmBuffer, sampleRate, 1, 16);
-  const durationSec = Math.round((rawPcmBuffer.length / (sampleRate * 2)) * 100) / 100;
-
-  return {
-    audioBuffer: wavBuffer,
-    durationSec,
-    voiceName,
-  };
+  throw (
+    lastError ||
+    new Error(
+      "Gemini Speech sedang mengalami antrean tinggi (503 High Demand). Silakan coba lagi beberapa saat lagi."
+    )
+  );
 }

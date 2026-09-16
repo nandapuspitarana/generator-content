@@ -179,6 +179,62 @@ describe("Google Gemini Speech Generation Service", () => {
       expect(result.durationSec).toBe(1);
       expect(result.audioBuffer.length).toBe(mockPcm.length + 44);
       expect(result.audioBuffer.toString("ascii", 0, 4)).toBe("RIFF");
+      expect(result.modelUsed).toBe("gemini-2.5-flash-preview-tts");
     });
+
+    it("should automatically failover to gemini-3.1-flash-tts-preview when primary model encounters 503 High Demand", async () => {
+      const mockPcm = Buffer.alloc(48000, 0x33);
+      const mockBase64 = mockPcm.toString("base64");
+
+      const successResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: "audio/L16;codec=pcm;rate=24000",
+                    data: mockBase64,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      // Mock fetch: reject with 503 on gemini-2.5-flash-preview-tts, succeed on gemini-3.1-flash-tts-preview
+      const fetchSpy = vi.fn().mockImplementation(async (url: string) => {
+        if (url.includes("gemini-2.5-flash-preview-tts")) {
+          return {
+            ok: false,
+            status: 503,
+            text: async () => JSON.stringify({
+              error: {
+                code: 503,
+                message: "This model is currently experiencing high demand. Spikes in demand are usually temporary.",
+              },
+            }),
+          };
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => successResponse,
+        };
+      });
+      vi.stubGlobal("fetch", fetchSpy);
+
+      process.env.GEMINI_API_KEY = "test-gemini-key";
+
+      const result = await synthesizeWithGemini({
+        text: "Mencoba failover otomatis model cadangan.",
+        voiceSeed: 9001,
+      });
+
+      expect(result.modelUsed).toBe("gemini-3.1-flash-tts-preview");
+      expect(result.audioBuffer.length).toBe(mockPcm.length + 44);
+      expect(result.voiceName).toBe("Kore");
+    }, 15000);
   });
 });
