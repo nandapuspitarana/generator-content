@@ -1,0 +1,4 @@
+# Format LJSpeech Standard (Header bersifat opsional / tanpa header dipisahkan pipa |)
+# id|raw_transcript_dengan_tag|normalized_text
+sample_0001|Halo semuanya! [laughing] Selamat datang di podcast saya.|Halo semuanya! [laughing] Selamat datang di podcast saya.
+sample_0002|Dengarkan baik-baik [whisper], ini rahasia kita.|Dengarkan baik-baik [whisper], ini rahasia kita.
