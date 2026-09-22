@@ -185,7 +185,7 @@ If type is "shape":
 
 Do NOT return anything else, no markdown formatting outside the JSON array. Output must be perfectly valid JSON array starting with [ and ending with ]. Make sure the layout approximately matches the input.`;
 
-  let messages: any[] = [
+  const messages: any[] = [
     { role: "system", content: systemPrompt }
   ];
 

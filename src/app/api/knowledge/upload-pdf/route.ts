@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       try {
         const checkRes = await esClient.search({
           index: TAGS_INDEX,
-          query: { match: { slug: slug } }
+          query: { term: { 'slug.keyword': slug } }
         })
         if (checkRes.hits.hits.length > 0) {
           slugSuffix++
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
       index: TAGS_INDEX,
       id: tagDoc.id,
       document: tagDoc,
-      refresh: true
+      refresh: 'wait_for'
     })
 
     // Create chapters index if not exists
@@ -161,7 +161,8 @@ export async function POST(req: NextRequest) {
     })
     
     if (operations.length > 0) {
-      await esClient.bulk({ refresh: true, operations })
+      // Background indexing without blocking HTTP response with Lucene refresh
+      await esClient.bulk({ operations })
     }
     
     return NextResponse.json({ tag: tagDoc, chunksCount: chunks.length })

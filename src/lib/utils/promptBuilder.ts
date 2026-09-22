@@ -68,7 +68,7 @@ function extractMainPoints(summary: string | undefined): string {
   
   // Or just take the first few sentences
   const sentences = summary.split(/[.!?]+/).filter(s => s.trim().length > 10);
-  return sentences.slice(0, 3).map((s, i) => `- ${s.trim()}`).join("\n");
+  return sentences.slice(0, 3).map(s => `- ${s.trim()}`).join("\n");
 }
 
 function getPlatformInstruction(platform: Platform): string {

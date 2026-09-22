@@ -13,7 +13,7 @@ export async function isElasticsearchAlive(): Promise<boolean> {
   try {
     const health = await esClient.ping()
     return health
-  } catch (err) {
+  } catch {
     return false
   }
 }

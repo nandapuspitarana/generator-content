@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ['pdf-parse', '@elastic/elasticsearch'],
   experimental: {
-    middlewareClientMaxBodySize: '50mb', // Next.js limit for proxy/middleware request bodies
+    proxyClientMaxBodySize: '50mb', // Next.js limit for proxy request bodies
   },
   images: {
     remotePatterns: [

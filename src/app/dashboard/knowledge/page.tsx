@@ -74,31 +74,61 @@ export default function KnowledgeBasePage() {
     }
   };
 
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStep, setUploadStep] = useState<string>("");
+
   const uploadPdf = async () => {
     if (!selectedFile) return;
     setUploading(true);
+    setUploadProgress(0);
+    setUploadStep("Mengunggah berkas...");
+
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
       formData.append('style', uploadStyle);
-      
-      const res = await fetch("/api/knowledge/upload-pdf", {
-        method: "POST",
-        body: formData
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/knowledge/upload-pdf");
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percent);
+            if (percent === 100) {
+              setUploadStep("Mengekstrak teks & indexing Elasticsearch...");
+            }
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            try {
+              const err = JSON.parse(xhr.responseText);
+              reject(new Error(err.error || "Gagal mengunggah PDF"));
+            } catch {
+              reject(new Error(`Upload gagal dengan status ${xhr.status}`));
+            }
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Terjadi kesalahan jaringan saat upload"));
+        xhr.send(formData);
       });
-      if (res.ok) {
-        setShowUploadModal(false);
-        setSelectedFile(null);
-        fetchTags();
-      } else {
-        const err = await res.json();
-        alert(err.error || "Gagal mengunggah PDF");
-      }
-    } catch (e) {
+
+      setShowUploadModal(false);
+      setSelectedFile(null);
+      fetchTags();
+    } catch (e: any) {
       console.error(e);
-      alert("Terjadi kesalahan saat memproses file PDF");
+      alert(e.message || "Terjadi kesalahan saat memproses file PDF");
     } finally {
       setUploading(false);
+      setUploadProgress(0);
+      setUploadStep("");
     }
   };
 
@@ -330,9 +360,23 @@ export default function KnowledgeBasePage() {
               </div>
               
               {uploading && (
-                <div className="flex flex-col items-center gap-2 py-3">
-                  <span className="material-symbols-outlined animate-spin text-2xl text-[#191919]">progress_activity</span>
-                  <p className="text-xs text-[#666666] text-center">Sedang memproses PDF dan memotong teks (intelligent chunking)...</p>
+                <div className="flex flex-col gap-2 py-2 bg-[#f4f3ee] border border-[#e8e7e0] rounded-lg p-3">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-[#191919] font-semibold flex items-center gap-1.5">
+                      <span className="material-symbols-outlined animate-spin text-[15px] text-[#c8102e]">progress_activity</span>
+                      {uploadStep || "Memproses..."}
+                    </span>
+                    <span className="text-[#666666] font-bold">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-[#e0ded8] h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-[#191919] h-full transition-all duration-300 rounded-full"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#777777]">
+                    {uploadProgress < 100 ? "Mengirim data berkas ke server..." : "Server sedang mengekstrak bab dan mengindeks ke Elasticsearch."}
+                  </p>
                 </div>
               )}
             </div>
